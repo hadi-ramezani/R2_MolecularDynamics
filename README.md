@@ -1,3 +1,3 @@
-# R2_serial
+# R2_MolecularDynamics
 
 Molecular Dynamics code
