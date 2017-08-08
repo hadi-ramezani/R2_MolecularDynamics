@@ -1,6 +1,6 @@
 /*
  * File:   Parameters.cpp
- * Author: amin
+ * Author: Hadi and Amin
  *
  * Created on September 9, 2015, 5:16 PM
  */
@@ -157,11 +157,11 @@ void Parameters::read_params(const char *filename){
             // future
             if (par_type == 1) {
                 // This is bond parameter
-                bond_str.push_back(str);
+                bond_str.push_back(str.substr(0, str.find("!", 0)));
             }
             else if (par_type == 2) {
                 // This is angle parameter
-                angle_str.push_back(str);
+                angle_str.push_back(str.substr(0, str.find("!", 0)));
             }
             else if (par_type == 3) {
                 // This is dihedral parameter
@@ -173,7 +173,7 @@ void Parameters::read_params(const char *filename){
             }
             else if (par_type == 5) {
                 // This is vdw parameter
-                vdw_str.push_back(str);
+                vdw_str.push_back(str.substr(0, str.find("!", 0)));
             }
             else if (par_type == 6) {
                 // This is vdw pair parameter

@@ -54,11 +54,12 @@ int main(int argc, char** argv) {
     Molecule mol(&conf); // Read PSF and PDB files
     Parameters params(&conf); // Read Parameter files
 
-    exit(1);
     Initial init(&conf,&mol,&params); // Prepare initial parameteres for run
     // We don't need mol anymore and it would be optimized the code if we delete mol but I don't know how :(
 
     cout << "Number of Residue = " << init.nresidue << endl;
+    exit(1);
+
     Integrator run(&conf,&init); // Main class for MD code
 
     if (strcmp(conf.mode,"dpd") != 0) {

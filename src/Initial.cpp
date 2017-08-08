@@ -1,6 +1,6 @@
 /*
  * File:   Initial.cpp
- * Author: amin
+ * Author: Hadi and Amin
  *
  * Created on September 10, 2015, 11:28 AM
  */
@@ -21,7 +21,7 @@ using namespace std;
 Initial::Initial(const Configure *conf, const Molecule *mol, const Parameters *params) {
 
     bonds = new BondElem[conf->numBonds];
-    memset((void *)bonds, 0, conf->numBonds*sizeof(BondElem));
+    memset((void *)bonds, 0, conf->numBonds*sizeof(BondElem)); 
     build_bondlist(conf,mol,params);
     angles = new AngleElem[conf->numAngles];
     memset((void *)angles, 0, conf->numAngles*sizeof(AngleElem));
@@ -39,7 +39,6 @@ Initial::Initial(const Configure *conf, const Molecule *mol, const Parameters *p
         memset((void *)dpd, 0, conf->numAtoms*sizeof(DpdElem));
         build_dpdlist(conf,mol,params);
     }
-
 
     pos = new Vector[conf->numAtoms];
     mass = new double[conf->numAtoms];
@@ -77,36 +76,38 @@ void Initial::build_bondlist(const Configure *conf, const Molecule *mol, const P
     string str;
     char   seg[256];
     char  *pch;
-    size_t found1, found2;
-
-    for (int ii=0; ii<conf->numBonds; ii++){
+    size_t iter_atype1, iter_atype2;
+    for (int ii = 0; ii < conf->numBonds; ii++){
         bonds[ii].atom1 = mol->bonds[ii].atom1;
-        bonds[ii].atom2 = mol->bonds[ii].atom2;
-
+        bonds[ii].atom2 = mol->bonds[ii].atom2;        
+        
         string atype1(mol->atoms[bonds[ii].atom1].atomtype); // Atom1 type
         string atype2(mol->atoms[bonds[ii].atom2].atomtype); // Atom2 type
-        for (int jj=0; jj < params->bond_str.size(); jj++){
+
+        for (int jj = 0; jj < params->bond_str.size(); jj++){
 
             str = params->bond_str[jj];
-            found1=str.find(atype1); //find atom1 in the str
-            if (found1!=std::string::npos) {
-                str.replace(found1,atype1.length(),""); //remove the atom1 from str
-                found2=str.find(atype2); //find atom1 in the str
-                if (found2!=std::string::npos) {
+            iter_atype1 = str.find(atype1); //find atom1 in the str
+            if (iter_atype1 != std::string::npos) {
+
+                str.replace(iter_atype1,atype1.length(),""); //remove the atom1 from str
+                iter_atype2 = str.find(atype2); //find atom1 in the str
+
+                if (iter_atype2 != std::string::npos){
                     strncpy(seg, str.c_str(), sizeof(seg));
                     seg[sizeof(seg) - 1] = 0;
-                    pch = strtok (seg," ,:=");pch = strtok (NULL," ,:="); // Jumb two columns
+                    pch = strtok (seg," ,:=");
                     bonds[ii].k = stof(strtok (NULL," ,:="));
                     bonds[ii].x0 = stof(strtok (NULL," ,:="));
                 }
             }
-        } // Loops all bonds parameters
+        }
+        // Loops all bonds parameters
         if (bonds[ii].k==0 && bonds[ii].x0==0) {
             cout << "ERROR : NO BOND PARAMETER FOR BOND BETWEEN ATOM " << bonds[ii].atom1+1 << " AND " << bonds[ii].atom2+1 << endl;
             exit(1);
         }
-
-    } // Loops all bonds
+    }
 }
 
 void Initial::build_anglelist(const Configure *conf, const Molecule *mol, const Parameters *params){
@@ -127,7 +128,7 @@ void Initial::build_anglelist(const Configure *conf, const Molecule *mol, const 
             str = params->angle_str[jj];
             strncpy(seg, str.c_str(), sizeof(seg));
             seg[sizeof(seg) - 1] = 0;
-            pch1 = strtok (seg," ,:=");pch1 = strtok (NULL," ,:=");
+            pch1 = strtok (seg," ,:=");
             pch2 = strtok (NULL," ,:=");
             pch3 = strtok (NULL," ,:=");
 
@@ -138,6 +139,7 @@ void Initial::build_anglelist(const Configure *conf, const Molecule *mol, const 
                 }
             }
         }
+
         if (angles[ii].k==0 && angles[ii].theta0==0) {
             cout << "ERROR : NO ANGLE PARAMETER FOR ANGLE BETWEEN ATOM " << angles[ii].atom1+1 << " AND "
                                                                          << angles[ii].atom2+1 << " AND "
@@ -170,19 +172,17 @@ void Initial::build_vdwlist(const Configure *conf, const Molecule *mol, const Pa
         if (flag) {
             vdw[ii].type = stype.size();
             stype.push_back(atype);
-
         }
     }
     ntype = stype.size();
-
 
     // Obtain rmin and epsilon
     for (int ii=0; ii<conf->numAtoms; ii++){
         string atype1(mol->atoms[ii].atomtype);
         for (int jj=0; jj<params->vdw_str.size(); jj++){
             str = params->vdw_str[jj];
-            found=str.find(atype1);
-            if (found!=std::string::npos) {
+            found = str.find(atype1);
+            if (found !=std::string::npos) {
                 strncpy(seg, str.c_str(), sizeof(seg));
                 seg[sizeof(seg) - 1] = 0;
                 pch = strtok (seg," ,:="); pch = strtok (NULL," ,:="); // Jump two columns
@@ -191,7 +191,12 @@ void Initial::build_vdwlist(const Configure *conf, const Molecule *mol, const Pa
                 vdw[ii].charge = mol->atoms[ii].charge;
             }
         }
+        if (vdw[ii].epsi == 0 && vdw[ii].rmin == 0) {
+            cout << "WARNING : VDW PARAMETER FOR ATOM " << vdw[ii].type+1 << " IS UNDEFINED OR SET TO ZERO" << endl;
+            exit(1);
+        }
     }
+
 
     // find excluded atoms for nonbonded calculation
     int a1, a2, a3;
