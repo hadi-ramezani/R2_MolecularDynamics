@@ -4,7 +4,6 @@ CFLAGS  = -std=c++11 -Wall -O3 #-ipo #-g #-xavx #-g
 HEAD = $(wildcard ./src/*.h)
 SOURCES = $(wildcard ./src/*.cpp) 
 EXECUTABLE = ./bin/MD
-BUILD = ./build/
 MKL = /opt/intel/compilers_and_libraries_2017.4.196/linux/mkl
 
 OBJECTS = $(SOURCES:.cpp=.o)
@@ -19,9 +18,10 @@ $(EXECUTABLE) : $(OBJECTS)
 %.o: %.cpp
 	$(CC) $(CFLAGS) $(DEBUG) -c -o $@ $< 
 clean:
-	rm ./build/*.o $(EXECUTABLE)
+	rm ./src/*.o $(EXECUTABLE)
 
 trj:
-	g++ $(DEBUG) -c -o ./build/Trajectory.o ./src/Trajectory.cpp
+	g++ $(DEBUG) -c -o ./src/Trajectory.o ./src/Trajectory.cpp
+
 rand:
 	icpc -std=c++11 -w -I$(MKL)/include -c -o Thermostat.o Thermostat.h -Wl,--start-group $(MKL)/lib/intel64/libmkl_intel_lp64.a $(MKL)/lib/intel64/libmkl_intel_thread.a $(MKL)/lib/intel64/libmkl_core.a -Wl,--end-group -L/$(MKL)/../compiler/lib/intel64 -liomp5 -lm -ldl -lpthread 
