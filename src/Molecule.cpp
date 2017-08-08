@@ -33,9 +33,9 @@ void Molecule::read_psf(const char *filename){
     infile.open(filename);
 
     while(!infile.eof()) {
-	getline(infile, str);        
+	    getline(infile, str);        
 
-        found=str.find("NATOM");
+        found = str.find("NATOM");
         // PSF file has 9 columns 
         // atom ID, segment name, residue ID, residue name, atom name, atom type, charge, mass, and an unused 0
         // I only need residue ID, residue name, atom name, atom type, charge, and mass
@@ -61,7 +61,7 @@ void Molecule::read_psf(const char *filename){
             }     
         }
         
-// Read bonds connections                 
+        // Read bonds connections                 
         found=str.find("NBOND");
         if (found!=std::string::npos) {
             strncpy(seg, str.c_str(), sizeof(seg));
@@ -86,7 +86,7 @@ void Molecule::read_psf(const char *filename){
             }
         }
         
-// Read angles connections        
+        // Read angles connections        
         found=str.find("NTHETA");
         if (found!=std::string::npos) {
             strncpy(seg, str.c_str(), sizeof(seg));

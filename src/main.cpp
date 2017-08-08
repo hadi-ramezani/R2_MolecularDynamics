@@ -37,7 +37,7 @@ int main(int argc, char** argv) {
 
     if (ifstream(conf.dcdname)) {
         cout << "The dcd file exist." << endl;
-        cout << "Please get the backup from dcd file and runrun the code again" << endl;
+        cout << "Please backup your dcd file and run your simulation again" << endl;
         exit(1);
     }
     if (ifstream(conf.resname)) {
@@ -54,6 +54,7 @@ int main(int argc, char** argv) {
     Molecule mol(&conf); // Read PSF and PDB files
     Parameters params(&conf); // Read Parameter files
 
+    exit(1);
     Initial init(&conf,&mol,&params); // Prepare initial parameteres for run
     // We don't need mol anymore and it would be optimized the code if we delete mol but I don't know how :(
 

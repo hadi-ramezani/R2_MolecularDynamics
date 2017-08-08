@@ -4,6 +4,7 @@ CFLAGS  = -std=c++11 -Wall -O3 #-ipo #-g #-xavx #-g
 HEAD = $(wildcard ./src/*.h)
 SOURCES = $(wildcard ./src/*.cpp) 
 EXECUTABLE = ./bin/MD
+BUILD = ./build/
 MKL = /opt/intel/compilers_and_libraries_2017.4.196/linux/mkl
 
 OBJECTS = $(SOURCES:.cpp=.o)

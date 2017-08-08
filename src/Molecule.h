@@ -9,8 +9,6 @@
 #define	MOLECULE_H
 #include "Configure.h"
 
-
-
 typedef struct bond {
     unsigned int atom1 = 0;
     unsigned int atom2 = 0;
@@ -25,7 +23,7 @@ typedef struct angle {
 } Angle;
 
 typedef struct atom {
-        // atoms name information
+    // atoms name information
     int res_ID;
     char resname[5];
     char atomname[5];
