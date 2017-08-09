@@ -139,8 +139,8 @@ void Nonbonded::Build_cells(const double box[3], const double celldist, const in
 }
 void Nonbonded::Neighborlist(const double box[3], const int num, const Initial *init, const Vector *pos){
 
-double box_2[3];
-box_2[0] = box[0]*0.5; box_2[1] = box[1]*0.5; box_2[2] = box[2]*0.5;
+    double box_2[3];
+    box_2[0] = box[0]*0.5; box_2[1] = box[1]*0.5; box_2[2] = box[2]*0.5;
     // Shift all atoms into the simulation box (HADI)
     // The origin of the box differ than NAMD and this is very important when we use NAMD coordinate
     for (int ii=0; ii<num; ii++){ // For a box with the origin at the lower left vertex
@@ -195,7 +195,7 @@ box_2[0] = box[0]*0.5; box_2[1] = box[1]*0.5; box_2[2] = box[2]*0.5;
                     }
                 }
             }
-            // Atom i is in the cell icell and atom j is in the cell jcell
+           // Atom i is in the cell icell and atom j is in the cell jcell
             for (int nn=0; nn<cells[icell].num-1; nn++){ // Search nearest neighbors; Maximum 13 neighbors;
                 int jcell=cells[icell].nbrlist[nn];
                 for (int jj=0; jj<cells[jcell].atoms.size(); jj++) { // Loop over all atoms in the jcell
@@ -222,6 +222,7 @@ box_2[0] = box[0]*0.5; box_2[1] = box[1]*0.5; box_2[2] = box[2]*0.5;
                 }
 
             }
+
 
             atoms[iatom].nbrlist1.shrink_to_fit(); atoms[iatom].nbrlist1.reserve(atoms[iatom].nbrlist1.size()+10);
             atoms[iatom].nbrlist2.shrink_to_fit(); atoms[iatom].nbrlist2.reserve(atoms[iatom].nbrlist2.size()+10);
@@ -346,7 +347,6 @@ for (int iatom=0; iatom<num; iatom++){
         elecE[index] = kqq_ij[index]*dr_1[index]*(1.0 - dr2[index]*cut_2);
         elecF[index] = elecE[index]*(dr_2[index] + 3.0*cut_2);
         elecE[index]*= (1.0 - dr2[index]*cut_2);
-
     }
 
     for (index=0; index<nnbr2; index++){
@@ -356,8 +356,8 @@ for (int iatom=0; iatom<num; iatom++){
             ljE[index] = 0.0;
             FF[index] = 0.0;
         }
-
     }
+
 
     Evdw += accumulate(ljE,ljE+nnbr2,0.0);
     Eelec += accumulate(elecE,elecE+nnbr2,0.0);
@@ -373,7 +373,6 @@ for (int iatom=0; iatom<num; iatom++){
         ff[jatom] -= FF[index];
         index++;
     }
-
 }
 }
 

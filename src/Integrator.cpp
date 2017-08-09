@@ -12,7 +12,6 @@
 #include "Vector.h"
 #include "Nonbonded.h"
 #include "Bonded.h"
-#include "External.h"
 
 using namespace std;
 
@@ -62,8 +61,10 @@ void Integrator::Loop(const Configure *conf, const Initial *init){
     } else {
         cout << "RIGID BONDS" << endl;
     }
+
     bonded.Compute_angle(init,pos,ff,conf->numAngles, Eangle);
 
+    //exit(1);
     if (strcmp(conf->settemp,"Yes") == 0 ) temp.Initial_vel(conf->numAtoms,init,vel);
 
     Ekin =0.0;
@@ -74,24 +75,21 @@ void Integrator::Loop(const Configure *conf, const Initial *init){
 
     cout << "Running the simulation..." << endl;
 
-
     for (int step=conf->fstep; step < conf->fstep + conf->nsteps + 1; step++){ // main loop
 
         Etot = Ebond + Eangle + Evdw + Eelec + Ekin;
         if (step%conf->dcdFreq == 0) dcd.frames(conf->numAtoms,pos,init->box);
         if (step%conf->energyFreq == 0) out.Print(step,step*conf->timestep,Ebond, Eangle, Evdw, Eelec, Ekin, Etot, temperature);
 
-
         for (int ii=0; ii<conf->numAtoms; ii++){ // Velocity Verlet
             pos[ii] += dt*vel[ii] + 0.5*dt*dt*ff[ii]*rmass[ii];
             vel2[ii] = vel[ii] + 0.5*dt*ff[ii]*rmass[ii];
         }
 
-
         //Compute force at time t+dt
         memset((void *)ff, 0, conf->numAtoms*sizeof(Vector));
-        //if (step%conf->pairlistFreq == 0) nonbonded.Neighborlist(init->box, conf->numAtoms, init, pos);
-        //if (step%conf->nonbondedFreq == 0) nonbonded.Compute(init, pos, ff, conf->numAtoms, Evdw, Eelec);
+        if (step%conf->pairlistFreq == 0) nonbonded.Neighborlist(init->box, conf->numAtoms, init, pos);
+        if (step%conf->nonbondedFreq == 0) nonbonded.Compute(init, pos, ff, conf->numAtoms, Evdw, Eelec);
         cout << step << endl;
 
         if (strcmp(conf->rigidBonds,"Yes") !=0 ) {

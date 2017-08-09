@@ -45,8 +45,10 @@ void Bonded::Compute_angle(const Initial *init, const Vector *pos,Vector *const 
         else if (cos_theta <= -1.0) cos_theta = -0.99999;
         double sin_theta = sqrt(1.0 - cos_theta * cos_theta);
         double theta = acos(cos_theta);
-        double diff = theta-angle->theta0;
+        double diff = theta - angle->theta0;
+        //cout << diff << endl;
         Eangle += angle->k * diff * diff;
+
 
         //Force  (HADI please check the equation :D)
         Vector r12n = r12/d12;
@@ -59,7 +61,6 @@ void Bonded::Compute_angle(const Initial *init, const Vector *pos,Vector *const 
         ff[angle->atom1] += f12;
         ff[angle->atom2] -= f12+f32;
         ff[angle->atom3] += f32;
-
     }
 }
 void Bonded::Compute_angle_ub(const Initial *init, const Vector *pos,Vector *const ff, const int num, double &Eangle){
@@ -78,7 +79,6 @@ void Bonded::Compute_angle_ub(const Initial *init, const Vector *pos,Vector *con
         diff *= -2.0 * angle->k / d13;
         ff[angle->atom1] += diff * r13;
         ff[angle->atom3] -= diff * r13;
-
     }
 }
 Bonded::Bonded(const Bonded& orig) {

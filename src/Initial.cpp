@@ -123,7 +123,6 @@ void Initial::build_anglelist(const Configure *conf, const Molecule *mol, const 
         char *atype1 = mol->atoms[angles[ii].atom1].atomtype; // Atom1 type
         char *atype2 = mol->atoms[angles[ii].atom2].atomtype; // Atom2 type
         char *atype3 = mol->atoms[angles[ii].atom3].atomtype; // Atom3 type
-
         for (int jj=0; jj < params->angle_str.size(); jj++){
             str = params->angle_str[jj];
             strncpy(seg, str.c_str(), sizeof(seg));
@@ -132,10 +131,10 @@ void Initial::build_anglelist(const Configure *conf, const Molecule *mol, const 
             pch2 = strtok (NULL," ,:=");
             pch3 = strtok (NULL," ,:=");
 
-            if (strcmp(atype2,pch2)==0){
-                if ((strcmp(atype1,pch1)==0 && strcmp(atype3,pch3)==0)||(strcmp(atype1,pch3)==0 && strcmp(atype3,pch1)==0)){
+            if (strcmp(atype2,pch2) == 0){
+                if ((strcmp(atype1,pch1) == 0 && strcmp(atype3,pch3) ==0 )||(strcmp(atype1,pch3)==0 && strcmp(atype3,pch1)==0)){
                     angles[ii].k = stof(strtok (NULL," ,:="));
-                    angles[ii].theta0 = stof(strtok (NULL," ,:=")); // * PI / 180.0 ;
+                    angles[ii].theta0 = stof(strtok (NULL," ,:=")) / PI / 180.0 ;
                 }
             }
         }

@@ -17,7 +17,6 @@
 #include "Trajectory.h"
 #include "Output.h"
 #include "Thermostat.h"
-#include "External.h"
 
 class Integrator {
 public:
@@ -27,7 +26,6 @@ public:
     Trajectory dcd;
     Output out;
     Thermostat temp;
-    External ext;
 
     Vector *pos;
     Vector *vel;
