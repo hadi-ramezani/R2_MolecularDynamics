@@ -47,7 +47,6 @@ Integrator::Integrator(const Configure *conf, const Initial *init)  : nonbonded(
         dt=conf->timestep*dtfac;
         KB=0.001987191;
     }
-
 }
 
 void Integrator::Loop(const Configure *conf, const Initial *init){
@@ -64,36 +63,45 @@ void Integrator::Loop(const Configure *conf, const Initial *init){
         cout << "RIGID BONDS" << endl;
     }
     bonded.Compute_angle(init,pos,ff,conf->numAngles, Eangle);
+
     if (strcmp(conf->settemp,"Yes") == 0 ) temp.Initial_vel(conf->numAtoms,init,vel);
+
     Ekin =0.0;
     for (int ii=0; ii<conf->numAtoms; ii++){
         Ekin += vel[ii]*vel[ii]*init->mass[ii];
     }
     temperature = Ekin/(temp.ndof*KB); Ekin *= 0.5;
 
-    cout << "Simulation is running be patient :)" << endl;
+    cout << "Running the simulation..." << endl;
+
+
     for (int step=conf->fstep; step < conf->fstep + conf->nsteps + 1; step++){ // main loop
+
         Etot = Ebond + Eangle + Evdw + Eelec + Ekin;
         if (step%conf->dcdFreq == 0) dcd.frames(conf->numAtoms,pos,init->box);
         if (step%conf->energyFreq == 0) out.Print(step,step*conf->timestep,Ebond, Eangle, Evdw, Eelec, Ekin, Etot, temperature);
+
 
         for (int ii=0; ii<conf->numAtoms; ii++){ // Velocity Verlet
             pos[ii] += dt*vel[ii] + 0.5*dt*dt*ff[ii]*rmass[ii];
             vel2[ii] = vel[ii] + 0.5*dt*ff[ii]*rmass[ii];
         }
 
+
         //Compute force at time t+dt
         memset((void *)ff, 0, conf->numAtoms*sizeof(Vector));
-        if (step%conf->pairlistFreq == 0) nonbonded.Neighborlist(init->box, conf->numAtoms, init, pos);
-        if (step%conf->nonbondedFreq == 0) nonbonded.Compute(init, pos, ff, conf->numAtoms, Evdw, Eelec);
+        //if (step%conf->pairlistFreq == 0) nonbonded.Neighborlist(init->box, conf->numAtoms, init, pos);
+        //if (step%conf->nonbondedFreq == 0) nonbonded.Compute(init, pos, ff, conf->numAtoms, Evdw, Eelec);
+        cout << step << endl;
 
         if (strcmp(conf->rigidBonds,"Yes") !=0 ) {
             bonded.Compute_bond(init,pos,ff,conf->numBonds,Ebond);
         } else {
-//            cout << "RIGID BONDS" << endl;
+            cout << "RIGID BONDS" << endl;
         }
-        bonded.Compute_angle(init,pos,ff,conf->numAngles, Eangle);
 
+
+        bonded.Compute_angle(init,pos,ff,conf->numAngles, Eangle);
 
         for (int ii=0; ii<conf->numAtoms; ii++){ // Velocity Verlet
             vel[ii] = vel2[ii] + 0.5*dt*ff[ii]*rmass[ii];
@@ -105,9 +113,8 @@ void Integrator::Loop(const Configure *conf, const Initial *init){
         for (int ii=0; ii<conf->numAtoms; ii++){ // Velocity Verlet
             Ekin += vel[ii]*vel[ii]*init->mass[ii];
         }
+
         temperature = Ekin/(temp.ndof*KB); Ekin *= 0.5;
-
-
     }
 }
 
@@ -132,7 +139,7 @@ void Integrator::Loop_dpd(const Configure *conf, const Initial *init){
     }
     temperature = Ekin/(temp.ndof*KB); Ekin *= 0.5;
 
-    cout << "Simulation is running be patient :)" << endl;
+    cout << "Running the simulation..." << endl;
     for (int step=conf->fstep; step < conf->fstep + conf->nsteps + 1; step++){ // main loop
         Evdw /= conf->numAtoms;
         Etot = Ebond + Eangle + Evdw + Ekin;

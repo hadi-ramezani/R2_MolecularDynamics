@@ -35,11 +35,12 @@ int main(int argc, char** argv) {
     Configure conf(argv[1]);  // Read Configure file
     cout << "Input files : " << conf.pdbname << "  " << conf.psfname << "  " << conf.parname << endl;
 
-    if (ifstream(conf.dcdname)) {
+    // check if the dcd file exists
+    /*if (ifstream(conf.dcdname)) {
         cout << "The dcd file exist." << endl;
         cout << "Please backup your dcd file and run your simulation again" << endl;
         exit(1);
-    }
+    }*/
     if (ifstream(conf.resname)) {
         cout << "Simulation start from restart file" << endl;
     } else {
@@ -58,7 +59,6 @@ int main(int argc, char** argv) {
     // We don't need mol anymore and it would be optimized the code if we delete mol but I don't know how :(
 
     cout << "Number of Residue = " << init.nresidue << endl;
-    exit(1);
 
     Integrator run(&conf,&init); // Main class for MD code
 
@@ -71,8 +71,6 @@ int main(int argc, char** argv) {
         cout << "DPD random,   sigma = " << init.sigma << endl;
         run.Loop_dpd(&conf, &init);
     }
-
-
 
     // Simulation Time
     time_t t1 = time(0);
