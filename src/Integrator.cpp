@@ -64,7 +64,6 @@ void Integrator::Loop(const Configure *conf, const Initial *init){
 
     bonded.Compute_angle(init,pos,ff,conf->numAngles, Eangle);
 
-    //exit(1);
     if (strcmp(conf->settemp,"Yes") == 0 ) temp.Initial_vel(conf->numAtoms,init,vel);
 
     Ekin =0.0;
@@ -90,7 +89,6 @@ void Integrator::Loop(const Configure *conf, const Initial *init){
         memset((void *)ff, 0, conf->numAtoms*sizeof(Vector));
         if (step%conf->pairlistFreq == 0) nonbonded.Neighborlist(init->box, conf->numAtoms, init, pos);
         if (step%conf->nonbondedFreq == 0) nonbonded.Compute(init, pos, ff, conf->numAtoms, Evdw, Eelec);
-        cout << step << endl;
 
         if (strcmp(conf->rigidBonds,"Yes") !=0 ) {
             bonded.Compute_bond(init,pos,ff,conf->numBonds,Ebond);

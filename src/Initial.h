@@ -23,6 +23,7 @@ struct BondElem {
 struct AngleElem {
   int atom1, atom2, atom3;
   double k, theta0;
+  double k_ub, r_ub;
 };
 
 struct VdwElem {

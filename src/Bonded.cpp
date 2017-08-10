@@ -41,26 +41,42 @@ void Bonded::Compute_angle(const Initial *init, const Vector *pos,Vector *const 
         double d12 = r12.length();
         double d32 = r32.length();
         double cos_theta = (r12*r32)/(d12*d32);
-        if (cos_theta >= 1.0) cos_theta = .99999;     // use to avoid numerical calculation error
-        else if (cos_theta <= -1.0) cos_theta = -0.99999;
+        if (cos_theta >= 1.0) cos_theta = 1.0;     // use to avoid numerical calculation error
+        else if (cos_theta <= -1.0) cos_theta = -1.0;
         double sin_theta = sqrt(1.0 - cos_theta * cos_theta);
         double theta = acos(cos_theta);
         double diff = theta - angle->theta0;
-        //cout << diff << endl;
         Eangle += angle->k * diff * diff;
 
+        //Forces
+        double d12inv = 1.0/d12;
+        double d32inv = 1.0/d32;
+        diff *= (-2.0 * angle->k) / sin_theta;
+        double c1 = diff * d12inv;
+        double c2 = diff * d32inv;
+        Vector f12 = c1*(r12*(d12inv*cos_theta) - r32*d32inv);
+        Vector f1 = f12;
+        Vector f32 = c2*(r32*(d32inv*cos_theta) - r12*d12inv);
+        Vector f3 = f32;
+        Vector f2 = -f12 - f32;
 
-        //Force  (HADI please check the equation :D)
-        Vector r12n = r12/d12;
-        Vector r32n = r32/d32;
-        double c12 = -2.0 * angle->k * diff / (sin_theta * d12);
-        double c32 = -2.0 * angle->k * diff / (sin_theta * d32);
-        Vector f12 = c12*(r12n*cos_theta - r32n);
-        Vector f32 = c32*(r32n*cos_theta - r12n);
+        if (angle->k_ub > 0.0) {
 
-        ff[angle->atom1] += f12;
-        ff[angle->atom2] -= f12+f32;
-        ff[angle->atom3] += f32;
+            Vector r13 = r12 - r32;
+            double d13 = r13.length();
+            diff = d13 - angle->r_ub;
+            Eangle += angle->k_ub * diff * diff;
+
+            // ub forces
+            diff *= -2.0*angle->k_ub / d13;
+            r13 *= diff;
+            f1 += r13;
+            f3 -= r13;
+    } 
+
+        ff[angle->atom1] += f1;
+        ff[angle->atom2] += f2;
+        ff[angle->atom3] += f3;
     }
 }
 void Bonded::Compute_angle_ub(const Initial *init, const Vector *pos,Vector *const ff, const int num, double &Eangle){

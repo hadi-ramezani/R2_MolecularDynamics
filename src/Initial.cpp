@@ -134,11 +134,20 @@ void Initial::build_anglelist(const Configure *conf, const Molecule *mol, const 
             if (strcmp(atype2,pch2) == 0){
                 if ((strcmp(atype1,pch1) == 0 && strcmp(atype3,pch3) ==0 )||(strcmp(atype1,pch3)==0 && strcmp(atype3,pch1)==0)){
                     angles[ii].k = stof(strtok (NULL," ,:="));
-                    angles[ii].theta0 = stof(strtok (NULL," ,:=")) / PI / 180.0 ;
+                    angles[ii].theta0 = stof(strtok (NULL," ,:=")) * PI / 180.0 ;
+                    // Read Urey-Bradley terms if they exist
+                    // This will return null (0) if no more term exist
+                    angles[ii].k_ub = stof(strtok (NULL," ,:="));
+                    if (angles[ii].k_ub != 0){
+                        angles[ii].r_ub = stof(strtok (NULL," ,:="));
+                    }
+                    else {
+                        angles[ii].k_ub = 0;
+                        angles[ii].r_ub = 0;
+                    }
                 }
             }
         }
-
         if (angles[ii].k==0 && angles[ii].theta0==0) {
             cout << "ERROR : NO ANGLE PARAMETER FOR ANGLE BETWEEN ATOM " << angles[ii].atom1+1 << " AND "
                                                                          << angles[ii].atom2+1 << " AND "
