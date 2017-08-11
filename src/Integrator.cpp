@@ -77,7 +77,7 @@ void Integrator::Loop(const Configure *conf, const Initial *init){
     for (int step=conf->fstep; step < conf->fstep + conf->nsteps + 1; step++){ // main loop
 
         Etot = Ebond + Eangle + Evdw + Eelec + Ekin;
-        if (step%conf->dcdFreq == 0) dcd.frames(conf->numAtoms,pos,init->box);
+        if (step%conf->dcdFreq == 0) dcd.WriteFrame(conf->numAtoms,pos,init->box);
         if (step%conf->energyFreq == 0) out.Print(step,step*conf->timestep,Ebond, Eangle, Evdw, Eelec, Ekin, Etot, temperature);
 
         for (int ii=0; ii<conf->numAtoms; ii++){ // Velocity Verlet
@@ -145,7 +145,7 @@ void Integrator::Loop_dpd(const Configure *conf, const Initial *init){
         }
         if (step%conf->dcdFreq == 0) {
             cout << "Step " << step << " write dcd file" << endl;
-            dcd.frames(conf->numAtoms,pos,init->box);
+            dcd.WriteFrame(conf->numAtoms,pos,init->box);
         }
         if (step%conf->energyFreq == 0) {
             cout << "Step " << step << " write output file" << endl;

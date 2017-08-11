@@ -17,12 +17,12 @@
 using namespace std;
 
 Trajectory::Trajectory(const char *filename, int natoms) {
+
     int out;
     char buff[80];
     char title[200];
 
     dcdf.open(filename, ios::out|ios::binary);
-
 
     // write the dcd header
     out = 84;
@@ -36,14 +36,18 @@ Trajectory::Trajectory(const char *filename, int natoms) {
     out=1000;
     dcdf.write ((char*)&out, sizeof (int));
     out=0;
+
     for (int ii=0; ii<6; ii++){
         dcdf.write ((char*)&out, sizeof (int));
     }
+
     float outf = 2.0;
     dcdf.write ((char*)&outf, sizeof (double));
+
     for (int ii=0; ii<8; ii++){
         dcdf.write((char*)&out, sizeof (int));
     }
+
     out=24;
     dcdf.write ((char*)&out, sizeof (int));
     out=84;
@@ -71,10 +75,9 @@ Trajectory::Trajectory(const char *filename, int natoms) {
     Y = new float[natoms];
     Z = new float[natoms];
     boxdcd = new double[6];
-
-
 }
-void Trajectory::frames(int natoms, const Vector *coor, const double *box)  {
+
+void Trajectory::WriteFrame(int natoms, const Vector *coor, const double *box)  {
 
     boxdcd[0]=box[0];boxdcd[1]=90.0; boxdcd[2]=box[1];
     boxdcd[3]=90.0;  boxdcd[4]=90.0;   boxdcd[5]=box[2];

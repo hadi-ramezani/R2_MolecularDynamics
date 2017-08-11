@@ -21,7 +21,7 @@ public:
     float *Z;
     double *boxdcd;
 
-    void frames(int natoms, const Vector *coor, const double *box);
+    void WriteFrame(int natoms, const Vector *coor, const double *box);
     Trajectory(const char *filename,int natoms);
     Trajectory(const Trajectory& orig);
     virtual ~Trajectory();
