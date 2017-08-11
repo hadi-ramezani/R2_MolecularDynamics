@@ -16,7 +16,12 @@
 
 using namespace std;
 
-Trajectory::Trajectory(const char *filename, int natoms) {
+Trajectory::Trajectory(const char *filename, int natoms, const Configure *conf) {
+
+    WriteHeader(filename, natoms);
+}
+
+void Trajectory::WriteHeader(const char *filename,int natoms) {
 
     int out;
     char buff[80];
@@ -76,6 +81,7 @@ Trajectory::Trajectory(const char *filename, int natoms) {
     Z = new float[natoms];
     boxdcd = new double[6];
 }
+
 
 void Trajectory::WriteFrame(int natoms, const Vector *coor, const double *box)  {
 

@@ -9,6 +9,7 @@
 #define	TRAJECTORY_H
 #include <fstream>
 #include "Vector.h"
+#include "Configure.h"
 
 using namespace std;
 
@@ -21,8 +22,9 @@ public:
     float *Z;
     double *boxdcd;
 
+    void WriteHeader(const char *filename, int natoms);
     void WriteFrame(int natoms, const Vector *coor, const double *box);
-    Trajectory(const char *filename,int natoms);
+    Trajectory(const char *filename,int natoms, const Configure* conf);
     Trajectory(const Trajectory& orig);
     virtual ~Trajectory();
 private:
