@@ -18,10 +18,10 @@ using namespace std;
 
 Integrator::Integrator(const Configure *conf, const Initial *init)  : nonbonded(conf->numAtoms, conf->cutoff, conf->switchdist, conf->pairlistdist, conf->seed)
                                                                     , dcd(conf->dcdname, conf->numAtoms, conf)
-                                                                    , out(conf->enename)
+                                                                    , out(conf->enename, conf)
                                                                     , temp(conf){
 
-    // define again atoms parameters this might help me for parallelization
+    // define again atoms parameters this might help for parallelization
     pos = new Vector[conf->numAtoms];
     rmass = new double[conf->numAtoms];
     for (int ii=0; ii<conf->numAtoms; ii++){
@@ -87,8 +87,8 @@ void Integrator::Loop(const Configure *conf, const Initial *init){
 
         //Compute force at time t+dt
         memset((void *)ff, 0, conf->numAtoms*sizeof(Vector));
-        //if (step%conf->pairlistFreq == 0) nonbonded.Neighborlist(init->box, conf->numAtoms, init, pos);
-        //if (step%conf->nonbondedFreq == 0) nonbonded.Compute(init, pos, ff, conf->numAtoms, Evdw, Eelec);
+        if (step%conf->pairlistFreq == 0) nonbonded.Neighborlist(init->box, conf->numAtoms, init, pos);
+        if (step%conf->nonbondedFreq == 0) nonbonded.Compute(init, pos, ff, conf->numAtoms, Evdw, Eelec);
 
         if (strcmp(conf->rigidBonds,"Yes") !=0 ) {
             bonded.Compute_bond(init,pos,ff,conf->numBonds,Ebond);

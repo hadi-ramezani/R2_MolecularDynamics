@@ -7,7 +7,7 @@
 
 #ifndef INTEGRATOR_H
 #define	INTEGRATOR_H
-#define TIMEFACTOR 48.88821 // Take care HADI
+#define TIMEFACTOR 48.88821 
 
 #include "Configure.h"
 #include "Initial.h"

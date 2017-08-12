@@ -57,8 +57,8 @@ public:
 
     void Compute(const Initial *init, const Vector *pos, Vector * const ff, const int num, double& Evdw, double& Eelec);
     void Compute_dpd(const Initial *init, const Vector *pos, const Vector *vel, Vector * const ff, const int num, double& Evdw);
-    void Build_cells(const double box[3], const double pairdist, const int num);
-    void Neighborlist(const double box[3], const int num, const Initial *init, const Vector *pos);
+    void Build_cells(const double* box, const double pairdist, const int num);
+    void Neighborlist(const double* box, const int num, const Initial *init, const Vector *pos);
     void built_table(const Initial *init, const int ntype, const int num);
     Nonbonded(int num, const double rc, const double switch1, const double pairlistdist, int seed);
     Nonbonded(const Nonbonded& orig);

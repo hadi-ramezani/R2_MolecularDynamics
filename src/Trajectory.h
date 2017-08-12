@@ -22,11 +22,12 @@ public:
     float *Y;
     float *Z;
     double *boxdcd;
+    double Etot = 0.0, Ebond = 0.0, Eangle = 0.0, Evdw = 0.0, Eelec = 0.0, Ekin = 0.0;
 
     void WriteHeader(const char *filename, int natoms);
     void ReadHeader(const char *filename, int natoms);
     void WriteFrame(int natoms, const Vector *coor, const double* box);
-    void ReadFrame(int natoms, Vector *coor, double* box);
+    bool ReadFrame(int natoms, Vector *coor, double* box);
     Trajectory(const char *filename, int natoms, const Configure* conf);
     Trajectory(const Trajectory& orig);
     virtual ~Trajectory();

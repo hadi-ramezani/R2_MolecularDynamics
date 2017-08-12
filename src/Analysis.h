@@ -30,8 +30,7 @@ public:
     double *rmass;
     double aBox[3];
 
-    double Etot = 0.0, Ebond = 0.0, Eangle = 0.0, Evdw = 0.0, Eelec = 0.0, Ekin = 0.0;
-    const double dtfac = 1.0/TIMEFACTOR;
+    double Etot = 0.0, Ebond = 0.0, Eangle = 0.0, Evdw = 0.0, Eelec = 0.0;
 
     Analysis(const Configure *conf, const Initial *init);
     void run(const Configure *conf, const Initial *init);

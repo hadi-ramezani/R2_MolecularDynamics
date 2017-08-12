@@ -71,7 +71,7 @@ void Nonbonded::built_table(const Initial *init, const int ntype, const int num)
     }
 }
 // Divide Box into small cells and put atoms into cells
-void Nonbonded::Build_cells(const double box[3], const double celldist, const int num){
+void Nonbonded::Build_cells(const double* box, const double celldist, const int num){
 
     int  ncellxy, tcells;
     ncellx = int(box[0]/celldist) + 1;
@@ -137,12 +137,14 @@ void Nonbonded::Build_cells(const double box[3], const double celldist, const in
         }
     }
 }
-void Nonbonded::Neighborlist(const double box[3], const int num, const Initial *init, const Vector *pos){
+
+void Nonbonded::Neighborlist(const double* box, const int num, const Initial *init, const Vector *pos){
 
     double box_2[3];
     box_2[0] = box[0]*0.5; box_2[1] = box[1]*0.5; box_2[2] = box[2]*0.5;
-    // Shift all atoms into the simulation box (HADI)
-    // The origin of the box differ than NAMD and this is very important when we use NAMD coordinate
+    
+    // Shift all atoms into the simulation box
+    // The origin of the box could differs from NAMD. This is important when we use NAMD coordinates
     for (int ii=0; ii<num; ii++){ // For a box with the origin at the lower left vertex
         poshift[ii].x = pos[ii].x - floor(pos[ii].x/box[0])*box[0];
         poshift[ii].y = pos[ii].y - floor(pos[ii].y/box[1])*box[1];

@@ -10,16 +10,24 @@
 #include <iostream>
 #include <iomanip>
 
-Output::Output(const char *filename) {
+Output::Output(const char *filename, const Configure* conf) {
     outf.open(filename);
-    outf << "#Step Time Ebond Eangle Evdw Eelec Ekin Etotal" << endl;
-
+    if ((strncasecmp(conf->analysis, "on", 2) == 0)){
+        outf << "#Frame Ebond Eangle Evdw Eelec Etotal" << endl;
+    } else {
+        outf << "#Step Time Ebond Eangle Evdw Eelec Ekin Etotal" << endl;
+    }
 }
 
 void Output::Print(const int Step, const double Time, const double Ebond, const double Eangle, const double Evdw, const double Eelec, const double Ekin, const double Etotal, const double temp){
     outf << Step << " " << Time << " " << Ebond << " " << Eangle << " " << Evdw << " " << Eelec << " " << Ekin << " " << Etotal << " " << temp << endl;
 //    printf("%10d %10.4f %10.4f %10.4f %10.4f %10.4f %10.4f %10.4f \n",Step, Time, Ebond, Eangle, Evdw, Eelec, Ekin, Etotal);
 }
+
+void Output::Print(const unsigned int frameNum, const double Ebond, const double Eangle, const double Evdw, const double Eelec, const double Etotal) {
+    outf << frameNum << " " << Ebond << " " << Eangle << " " << Evdw << " " << Eelec << Etotal << endl;    
+}
+
 void Output::wrap(const Initial *init, const double *box, Vector *const pos){
 
     int iatom = 0;
@@ -70,7 +78,6 @@ void Output::wrap(const Initial *init, const double *box, Vector *const pos){
             }
         }
     }
-
 }
 
 Output::Output(const Output& orig) {
