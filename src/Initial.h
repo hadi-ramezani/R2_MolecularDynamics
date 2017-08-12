@@ -48,10 +48,10 @@ struct Connections {
 class Initial {
 public:
 
-    Vector *pos;
-    double *mass;
+    Vector* pos;
+    double* mass;
 
-    int *residue;
+    int* residue;
     int nresidue;
 
     BondElem *bonds;

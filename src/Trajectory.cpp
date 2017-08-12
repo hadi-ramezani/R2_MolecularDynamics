@@ -100,18 +100,14 @@ void Trajectory::ReadHeader(const char *filename,int natoms) {
     }
 
     // read the dcd header
-    //out = 84;
     dcdf.read((char*) &out, sizeof (int));
 
     strcpy(buff, "CORD");
     dcdf.read(buff, 4);
-    //out=0;
+
     dcdf.read((char*)&out, sizeof (int));
-    //out=1;
     dcdf.read((char*)&out, sizeof (int));
-    //out=1000;
     dcdf.read((char*)&out, sizeof (int));
-    //out=0;
 
     for (int ii=0; ii<6; ii++){
         dcdf.read((char*)&out, sizeof (int));
@@ -124,14 +120,10 @@ void Trajectory::ReadHeader(const char *filename,int natoms) {
         dcdf.read((char*)&out, sizeof (int));
     }
 
-    //out=24;
     dcdf.read((char*)&out, sizeof (int));
-    //out=84;
     dcdf.read((char*)&out, sizeof (int));
-    //out=164;
     dcdf.read((char*)&out, sizeof (int));
 
-    //out=2;
     dcdf.read((char*)&out, sizeof (int));
     sprintf(title,"REMARKS FILENAME= out.dcd CREATED BY NAMD");
     title[79]='\0';
@@ -139,15 +131,12 @@ void Trajectory::ReadHeader(const char *filename,int natoms) {
     sprintf(title,"TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT");
     dcdf.read(buff, 80);
 
-    //out=164;
     dcdf.read((char*)&out, sizeof (int));
 
-    //out=4;
     dcdf.read((char*)&out, sizeof (int));
     dcdf.read((char*)&natoms, sizeof (int));
     dcdf.read((char*)&out, sizeof (int));
 
-    cout << "I read " << title << endl;
     X = new float[natoms];
     Y = new float[natoms];
     Z = new float[natoms];
@@ -185,6 +174,39 @@ void Trajectory::WriteFrame(int natoms, const Vector *coor, const double *box)  
     dcdf.write ((char*)&out, sizeof (int));
 
 }
+
+void Trajectory::ReadFrame(int natoms, Vector* coor)  {
+
+    int out;
+    double box[3];
+
+    dcdf.read((char*)&out, sizeof (unsigned int));
+
+    // Read box information
+    dcdf.read((char*)boxdcd, out);
+    // Save box information
+    box[0] = boxdcd[0]; box[1] = boxdcd[2]; box[2] = boxdcd[5];
+    dcdf.read((char*)&out, sizeof (unsigned int));
+
+    dcdf.read((char*)&out, sizeof (int));
+    dcdf.read((char*)X, natoms*sizeof (float));
+    dcdf.read((char*)&out, sizeof (int));
+
+    dcdf.read((char*)&out, sizeof (int));
+    dcdf.read((char*)Y, natoms*sizeof (float));
+    dcdf.read((char*)&out, sizeof (int));
+
+    dcdf.read((char*)&out, sizeof (int));
+    dcdf.read((char*)Z, natoms*sizeof (float));
+    dcdf.read((char*)&out, sizeof (int));
+
+    for (int ii=0; ii<natoms; ii++){
+        coor[ii].x = X[ii]; //- floor(coor[ii].x/box[0])*box[0];
+        coor[ii].y = Y[ii]; //- floor(coor[ii].y/box[1])*box[1];
+        coor[ii].z = Z[ii]; //- floor(coor[ii].z/box[2])*box[2];
+    }
+}
+
 Trajectory::Trajectory(const Trajectory& orig) {
 }
 

@@ -25,6 +25,7 @@ public:
     void WriteHeader(const char *filename, int natoms);
     void ReadHeader(const char *filename, int natoms);
     void WriteFrame(int natoms, const Vector *coor, const double *box);
+    void ReadFrame(int natoms, Vector *coor);
     Trajectory(const char *filename,int natoms, const Configure* conf);
     Trajectory(const Trajectory& orig);
     virtual ~Trajectory();
