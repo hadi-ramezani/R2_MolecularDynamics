@@ -23,7 +23,6 @@ void Analysis::run(const Configure *conf, const Initial* init) {
     
     // define again atoms parameters this might help for parallelization
     pos = new Vector[conf->numAtoms];
-    rmass = new double[conf->numAtoms];
     for (int ii=0; ii<conf->numAtoms; ii++){
         pos[ii] = init->pos[ii];
     }
