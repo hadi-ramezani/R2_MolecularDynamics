@@ -1,6 +1,6 @@
 /*
  * File:   Bonded.h
- * Author: amin
+ * Author: Hadi and Amin
  *
  * Created on September 23, 2015, 9:46 AM
  */

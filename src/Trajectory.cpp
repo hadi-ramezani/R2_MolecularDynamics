@@ -17,8 +17,11 @@
 using namespace std;
 
 Trajectory::Trajectory(const char *filename, int natoms, const Configure *conf) {
-
-    WriteHeader(filename, natoms);
+    if (!(strncasecmp(conf->analysis, "on", 2) == 0)){
+        WriteHeader(filename, natoms);        
+    } else {
+        ReadHeader(filename, natoms);
+    }
 }
 
 void Trajectory::WriteHeader(const char *filename,int natoms) {
@@ -76,6 +79,75 @@ void Trajectory::WriteHeader(const char *filename,int natoms) {
     dcdf.write ((char*)&natoms, sizeof (int));
     dcdf.write ((char*)&out, sizeof (int));
 
+    X = new float[natoms];
+    Y = new float[natoms];
+    Z = new float[natoms];
+    boxdcd = new double[6];
+}
+
+void Trajectory::ReadHeader(const char *filename,int natoms) {
+
+    int out;
+    char buff[80];
+    char title[200];
+
+    // Check if the file is open
+    dcdf.open(filename, ios::in|ios::binary);
+
+    if (!dcdf) {
+        cout << "Error: could not read the input dcd file " << endl;
+        exit(1);
+    }
+
+    // read the dcd header
+    //out = 84;
+    dcdf.read((char*) &out, sizeof (int));
+
+    strcpy(buff, "CORD");
+    dcdf.read(buff, 4);
+    //out=0;
+    dcdf.read((char*)&out, sizeof (int));
+    //out=1;
+    dcdf.read((char*)&out, sizeof (int));
+    //out=1000;
+    dcdf.read((char*)&out, sizeof (int));
+    //out=0;
+
+    for (int ii=0; ii<6; ii++){
+        dcdf.read((char*)&out, sizeof (int));
+    }
+
+    float outf = 2.0;
+    dcdf.read((char*)&outf, sizeof (double));
+
+    for (int ii=0; ii<8; ii++){
+        dcdf.read((char*)&out, sizeof (int));
+    }
+
+    //out=24;
+    dcdf.read((char*)&out, sizeof (int));
+    //out=84;
+    dcdf.read((char*)&out, sizeof (int));
+    //out=164;
+    dcdf.read((char*)&out, sizeof (int));
+
+    //out=2;
+    dcdf.read((char*)&out, sizeof (int));
+    sprintf(title,"REMARKS FILENAME= out.dcd CREATED BY NAMD");
+    title[79]='\0';
+    dcdf.read(title, 80);
+    sprintf(title,"TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT");
+    dcdf.read(buff, 80);
+
+    //out=164;
+    dcdf.read((char*)&out, sizeof (int));
+
+    //out=4;
+    dcdf.read((char*)&out, sizeof (int));
+    dcdf.read((char*)&natoms, sizeof (int));
+    dcdf.read((char*)&out, sizeof (int));
+
+    cout << "I read " << title << endl;
     X = new float[natoms];
     Y = new float[natoms];
     Z = new float[natoms];

@@ -1,6 +1,6 @@
 /*
  * File:   Initial.h
- * Author: amin
+ * Author: Hadi and Amin
  *
  * Created on September 10, 2015, 11:28 AM
  */

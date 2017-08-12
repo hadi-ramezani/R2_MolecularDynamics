@@ -19,6 +19,7 @@
 #include "Initial.h"
 #include "Integrator.h"
 #include "Nonbonded.h"
+#include "Analysis.h"
 
 using namespace std;
 
@@ -41,6 +42,7 @@ int main(int argc, char** argv) {
         cout << "Please backup your dcd file and run your simulation again" << endl;
         exit(1);
     }*/
+
     if (ifstream(conf.resname)) {
         cout << "Simulation start from restart file" << endl;
     } else {
@@ -60,10 +62,17 @@ int main(int argc, char** argv) {
 
     cout << "Number of Residue = " << init.nresidue << endl;
 
+
     Integrator run(&conf,&init); // Main class for MD code
 
     if (strcmp(conf.mode,"dpd") != 0) {
-        run.Loop(&conf, &init);
+        if (strncasecmp(conf.analysis, "on", 2) == 0){
+            Analysis analysis(&conf,&init);
+            analysis.run(&conf, &init);
+        }
+        else {
+            run.Loop(&conf, &init);
+        }
     } else {
         cout << "DPD simulation is running" << endl;
         cout << "Cutoff distance must be 1.0" << endl;

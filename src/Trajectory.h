@@ -15,7 +15,7 @@ using namespace std;
 
 class Trajectory {
 public:
-    ofstream dcdf;
+    fstream dcdf;
 
     float *X;
     float *Y;
@@ -23,6 +23,7 @@ public:
     double *boxdcd;
 
     void WriteHeader(const char *filename, int natoms);
+    void ReadHeader(const char *filename, int natoms);
     void WriteFrame(int natoms, const Vector *coor, const double *box);
     Trajectory(const char *filename,int natoms, const Configure* conf);
     Trajectory(const Trajectory& orig);

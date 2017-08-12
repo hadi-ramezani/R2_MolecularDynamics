@@ -1,6 +1,6 @@
 /*
  * File:   Configure.h
- * Author: amin
+ * Author: Hadi and Amin
  *
  * Created on September 3, 2015, 5:36 PM
  */
@@ -40,8 +40,6 @@ public:
 
     char rigidBonds[3];
 
-
-
     int restartFreq;
     int wrapFreq;
     int dcdFreq;
@@ -50,14 +48,13 @@ public:
     int fstep;
     int nsteps;
 
-
-
-
     int numAtoms;
     int numBonds;
     int numAngles;
 
-
+    char analysis[3];
+    char aMode[10] = "off";
+    char aDcdName[80] = {0};
 
     Configure();
     Configure(char *input);
