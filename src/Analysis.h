@@ -28,6 +28,7 @@ public:
     Vector *vel2;
     Vector *ff;
     double *rmass;
+    double aBox[3];
 
     double Etot = 0.0, Ebond = 0.0, Eangle = 0.0, Evdw = 0.0, Eelec = 0.0, Ekin = 0.0;
     const double dtfac = 1.0/TIMEFACTOR;

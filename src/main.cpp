@@ -67,7 +67,7 @@ int main(int argc, char** argv) {
 
     if (strcmp(conf.mode,"dpd") != 0) {
         if (strncasecmp(conf.analysis, "on", 2) == 0){
-            Analysis analysis(&conf,&init);
+            Analysis analysis(&conf, &init);
             analysis.run(&conf, &init);
         }
         else {

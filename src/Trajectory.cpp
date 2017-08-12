@@ -14,6 +14,7 @@
 #include <sstream>
 #include "Trajectory.h"
 
+
 using namespace std;
 
 Trajectory::Trajectory(const char *filename, int natoms, const Configure *conf) {
@@ -85,7 +86,7 @@ void Trajectory::WriteHeader(const char *filename,int natoms) {
     boxdcd = new double[6];
 }
 
-void Trajectory::ReadHeader(const char *filename,int natoms) {
+void Trajectory::ReadHeader(const char *filename, int natoms) {
 
     int out;
     char buff[80];
@@ -146,6 +147,7 @@ void Trajectory::ReadHeader(const char *filename,int natoms) {
 
 void Trajectory::WriteFrame(int natoms, const Vector *coor, const double *box)  {
 
+
     boxdcd[0]=box[0];boxdcd[1]=90.0; boxdcd[2]=box[1];
     boxdcd[3]=90.0;  boxdcd[4]=90.0;   boxdcd[5]=box[2];
 
@@ -175,17 +177,16 @@ void Trajectory::WriteFrame(int natoms, const Vector *coor, const double *box)  
 
 }
 
-void Trajectory::ReadFrame(int natoms, Vector* coor)  {
+void Trajectory::ReadFrame(int natoms, Vector* coor, double* aBox)  {
 
     int out;
-    double box[3];
 
     dcdf.read((char*)&out, sizeof (unsigned int));
 
     // Read box information
     dcdf.read((char*)boxdcd, out);
     // Save box information
-    box[0] = boxdcd[0]; box[1] = boxdcd[2]; box[2] = boxdcd[5];
+    aBox[0] = boxdcd[0]; aBox[1] = boxdcd[2]; aBox[2] = boxdcd[5];
     dcdf.read((char*)&out, sizeof (unsigned int));
 
     dcdf.read((char*)&out, sizeof (int));

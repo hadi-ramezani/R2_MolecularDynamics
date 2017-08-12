@@ -19,9 +19,9 @@ Analysis::Analysis(const Configure *conf, const Initial *init) : nonbonded(conf-
                                                                     , out(conf->enename) {
 }
 
-void Analysis::run(const Configure *conf, const Initial *init) {
+void Analysis::run(const Configure *conf, const Initial* init) {
     
-    dcd.ReadFrame(conf->numAtoms, init->pos);
+    dcd.ReadFrame(conf->numAtoms, init->pos, aBox);
 }
 
 Analysis::~Analysis() {
