@@ -177,7 +177,7 @@ void Trajectory::WriteFrame(int natoms, const Vector *coor, const double *box)  
 
 }
 
-bool Trajectory::ReadFrame(int natoms, Vector* coor, double* aBox)  {
+bool Trajectory::ReadFrame(int natoms, Vector* pos, double* aBox)  {
 
     int out;
 
@@ -202,9 +202,9 @@ bool Trajectory::ReadFrame(int natoms, Vector* coor, double* aBox)  {
     dcdf.read((char*)&out, sizeof (int));
 
     for (int ii=0; ii<natoms; ii++){
-        coor[ii].x = X[ii]; //- floor(coor[ii].x/box[0])*box[0];
-        coor[ii].y = Y[ii]; //- floor(coor[ii].y/box[1])*box[1];
-        coor[ii].z = Z[ii]; //- floor(coor[ii].z/box[2])*box[2];
+        pos[ii].x = X[ii]; //- floor(coor[ii].x/box[0])*box[0];
+        pos[ii].y = Y[ii]; //- floor(coor[ii].y/box[1])*box[1];
+        pos[ii].z = Z[ii]; //- floor(coor[ii].z/box[2])*box[2];
     }
 
     if (!dcdf) {

@@ -4,7 +4,7 @@
  *
  * Created on September 13, 2015, 4:21 PM
  */
-#define COULOMB 332.0636 // HADI pleas check the value
+#define COULOMB 332.0636 
 #define ALIGN __attribute__((aligned(32)))
 #define P4 float
 #define L1 1024

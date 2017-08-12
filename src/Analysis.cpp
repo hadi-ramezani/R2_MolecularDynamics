@@ -26,9 +26,9 @@ void Analysis::run(const Configure *conf, const Initial* init) {
     rmass = new double[conf->numAtoms];
     for (int ii=0; ii<conf->numAtoms; ii++){
         pos[ii] = init->pos[ii];
-        rmass[ii] = 1/init->mass[ii];
     }
 
+    // needed to avoid redifinition of compute functions
     ff = new Vector[conf->numAtoms];
     memset((void *)ff, 0, conf->numAtoms*sizeof(Vector));
 
@@ -46,12 +46,11 @@ void Analysis::run(const Configure *conf, const Initial* init) {
         cout << "Reading frame " << frameNum << endl;
 
         //Compute and print energies
-
-        bonded.Compute_angle(init,pos,ff,conf->numAngles, Eangle);
-        bonded.Compute_bond(init, pos, ff, conf->numBonds, Ebond);
+        bonded.Compute_angle(init,init->pos,ff,conf->numAngles, Eangle);
+        bonded.Compute_bond(init, init->pos, ff, conf->numBonds, Ebond);
         nonbonded.Build_cells(aBox, conf->celldist, conf->numAtoms);
-        nonbonded.Neighborlist(aBox, conf->numAtoms, init, pos);
-        nonbonded.Compute(init, pos, ff, conf->numAtoms, Evdw, Eelec);
+        nonbonded.Neighborlist(aBox, conf->numAtoms, init, init->pos);
+        nonbonded.Compute(init, init->pos, ff, conf->numAtoms, Evdw, Eelec);
         Etot = Ebond + Eangle + Evdw + Eelec;
         out.Print(frameNum, Ebond, Eangle, Evdw, Eelec, Etot);
 

@@ -25,7 +25,7 @@ void Output::Print(const int Step, const double Time, const double Ebond, const 
 }
 
 void Output::Print(const unsigned int frameNum, const double Ebond, const double Eangle, const double Evdw, const double Eelec, const double Etotal) {
-    outf << frameNum << " " << Ebond << " " << Eangle << " " << Evdw << " " << Eelec << Etotal << endl;    
+    outf << frameNum << " " << Ebond << " " << Eangle << " " << Evdw << " " << Eelec << " " << Etotal << endl;    
 }
 
 void Output::wrap(const Initial *init, const double *box, Vector *const pos){
