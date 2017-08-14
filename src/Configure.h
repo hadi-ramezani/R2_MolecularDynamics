@@ -1,10 +1,3 @@
-/*
- * File:   Configure.h
- * Author: Hadi and Amin
- *
- * Created on September 3, 2015, 5:36 PM
- */
-
 #ifndef CONFIGURE_H
 #define	CONFIGURE_H
 

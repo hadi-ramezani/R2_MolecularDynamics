@@ -1,10 +1,3 @@
-/*
- * File:   Configure.cpp
- * Author: Hadi and Amin
- *
- * Created on September 3, 2015, 5:36 PM
- */
-
 #include <iostream>
 #include <fstream>
 #include <string.h>

@@ -1,10 +1,3 @@
-/* 
- * File:   Vector.h
- * Author: amin
- *
- * Created on September 10, 2015, 11:49 AM
- */
-
 #ifndef VECTOR_H
 #define	VECTOR_H
 

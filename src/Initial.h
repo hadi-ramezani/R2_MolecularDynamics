@@ -5,9 +5,6 @@
 #include "Vector.h"
 #include "UniqueSet.h"
 #include "Hydrogen.h"
-
-// check if these are needed
-#include "vector"
 #include "Parameters.h"
 
 class Parameters;

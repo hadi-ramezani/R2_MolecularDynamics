@@ -1,10 +1,3 @@
-/*
- * File:   Integrator.cpp
- * Author: amin
- *
- * Created on September 11, 2015, 5:17 PM
- */
-
 #include <fstream>
 #include "Integrator.h"
 #include "Configure.h"

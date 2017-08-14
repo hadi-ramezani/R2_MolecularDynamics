@@ -1,10 +1,3 @@
-/*
- * File:   Integrator.h
- * Author: amin
- *
- * Created on September 11, 2015, 5:17 PM
- */
-
 #ifndef INTEGRATOR_H
 #define	INTEGRATOR_H
 #define TIMEFACTOR 48.88821 

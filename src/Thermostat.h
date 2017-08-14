@@ -1,10 +1,3 @@
-/*
- * File:   Thermostat.h
- * Author: amin
- *
- * Created on November 26, 2015, 10:32 AM
- */
-
 #ifndef THERMOSTAT_H
 #define	THERMOSTAT_H
 

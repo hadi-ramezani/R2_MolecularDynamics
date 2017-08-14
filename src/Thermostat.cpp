@@ -1,9 +1,3 @@
-/*
- * File:   Thermostat.cpp
- * Author: amin
- *
- * Created on November 26, 2015, 10:32 AM
- */
 #define PI 3.141592653
 #define TIMEFACTOR 48.88821
 #define L2 2048

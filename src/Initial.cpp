@@ -1,8 +1,3 @@
-/*
- * Author: Hadi
- *
- */
-
 #include "Initial.h"
 #include <stdio.h>
 #include <string.h>

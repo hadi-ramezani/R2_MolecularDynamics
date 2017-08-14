@@ -1,4 +1,3 @@
-
 // Here are the routines to manupulate a PDB ATOM record
 // It can be created by hand or with a string in the PDB format
 

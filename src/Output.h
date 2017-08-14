@@ -1,10 +1,3 @@
-/*
- * File:   Output.h
- * Author: amin
- *
- * Created on September 28, 2015, 5:23 PM
- */
-
 #ifndef OUTPUT_H
 #define	OUTPUT_H
 #include <fstream>

@@ -1,8 +1,3 @@
-/* 
- * Author: Hadi
- *
- */
-
 #ifndef PARAMETERS_H
 #define	PARAMETERS_H
 
@@ -12,9 +7,6 @@ class StringList;
 #include "Configure.h"
 #include "R2.h"
 
-// Check if these are necessary; probably yes
-#include <vector>
-#include <string>
 
 //  Define the number of Multiples that a Dihedral or Improper
 //  bond can have with the Charm22 parameter set
@@ -91,6 +83,7 @@ struct vdw_params;
 struct vdw_pair_params;
 
 class Parameters {
+
 private:
     char *atomTypeNames; //  Names of atom types
     int AllFilesRead;    //  Flag 1 imples that all
@@ -171,12 +164,6 @@ private:
     void free_vdw_tree(struct vdw_params *);
     void free_vdw_pair_tree(IndexedVdwPair *);
     void free_vdw_pair_list();
-
-    //check if these are necessary; probably not
-    vector<string> bond_str;
-    vector<string> angle_str;
-    vector<string> vdw_str;
-    vector<string> dpd_str;
 
 public:
 

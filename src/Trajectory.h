@@ -1,10 +1,3 @@
-/*
- * File:   Trajectory.h
- * Author: amin
- *
- * Created on September 24, 2015, 12:20 PM
- */
-
 #ifndef TRAJECTORY_H
 #define	TRAJECTORY_H
 #include <fstream>

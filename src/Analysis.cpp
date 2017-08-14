@@ -1,8 +1,3 @@
-/*
- * Author: Hadi
- *
- */
-
 #include <fstream>
 #include "Integrator.h"
 #include "Configure.h"

@@ -1,9 +1,3 @@
-/*
- * Author: Hadi
- *
- * Created on September 9, 2015, 5:16 PM
- */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>

@@ -1,10 +1,3 @@
-/*
- * File:   Trajectory.cpp
- * Author: amin
- *
- * Created on September 24, 2015, 12:20 PM
- */
-
 #include <fstream>
 #include <iostream>
 #include <string.h>

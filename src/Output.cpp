@@ -1,10 +1,3 @@
-/*
- * File:   Output.cpp
- * Author: amin
- *
- * Created on September 28, 2015, 5:23 PM
- */
-
 #include "Output.h"
 #include <stdio.h>
 #include <iostream>
