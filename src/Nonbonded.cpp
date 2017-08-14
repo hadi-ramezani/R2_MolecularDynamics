@@ -36,7 +36,7 @@ void Nonbonded::compute(const Initial *init, const Vector *pos,
 
     int xb, yb, zb, xytotb, totb;               // dimensions of decomposition
 
-    atominfo **boxatom;       // positions, forces, and indicies for each atom  
+    atominfo* *boxatom;       // positions, forces, and indicies for each atom  
     int *numinbox, *maxinbox; // Number of atoms in each box
     int **nbrlist;            // List of neighbors for each box
 
