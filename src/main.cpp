@@ -1,10 +1,3 @@
-/*
- * File:   main.cpp
- * Author: amin
- *
- * Created on September 3, 2015, 1:33 PM
- */
-
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
@@ -14,12 +7,16 @@
 #include <stdlib.h>
 #include <new>
 #include "Configure.h"
-#include "Molecule.h"
 #include "Parameters.h"
 #include "Initial.h"
 #include "Integrator.h"
 #include "Nonbonded.h"
 #include "Analysis.h"
+
+void R2_die(const char *s) {
+  printf("%s\n",s);
+  exit(1);
+}
 
 using namespace std;
 
@@ -54,31 +51,23 @@ int main(int argc, char** argv) {
     cout << "Number of bonds   = " << conf.numBonds << endl;
     cout << "Number of Angles  = " << conf.numAngles << endl;
 
-    Molecule mol(&conf); // Read PSF and PDB files
+    PDB pdb(conf.pdbname);
     Parameters params(&conf); // Read Parameter files
 
-    Initial init(&conf,&mol,&params); // Prepare initial parameteres for run
+    Initial init(&conf, &params); // Prepare initial parameteres for run
+
     // We don't need mol anymore and it would be optimized the code if we delete mol but I don't know how :(
+    //cout << "Number of Residue = " << init.nresidue << endl;
 
-    cout << "Number of Residue = " << init.nresidue << endl;
 
+    Integrator run(&conf,&init, &pdb, &params); // Main class for MD code
 
-    Integrator run(&conf,&init); // Main class for MD code
-
-    if (strcmp(conf.mode,"dpd") != 0) {
-        if (strncasecmp(conf.analysis, "on", 2) == 0){
-            Analysis analysis(&conf, &init);
-            analysis.run(&conf, &init);
-        }
-        else {
-            run.Loop(&conf, &init);
-        }
-    } else {
-        cout << "DPD simulation is running" << endl;
-        cout << "Cutoff distance must be 1.0" << endl;
-        cout << "DPD friction, gamma = " << init.gamma << endl;
-        cout << "DPD random,   sigma = " << init.sigma << endl;
-        run.Loop_dpd(&conf, &init);
+    if (strncasecmp(conf.analysis, "on", 2) == 0){
+        Analysis analysis(&conf, &init, &pdb, &params);
+        analysis.run(&conf, &init, &pdb);
+    }
+    else {
+        run.Loop(&conf, &init);
     }
 
     // Simulation Time

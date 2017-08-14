@@ -11,7 +11,7 @@
 #include "Vector.h"
 #include "Configure.h"
 #include "Initial.h"
-
+ 
 using namespace std;
 
 class Trajectory {

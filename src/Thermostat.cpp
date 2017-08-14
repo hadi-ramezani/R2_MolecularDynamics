@@ -57,7 +57,7 @@ void Thermostat::Initial_vel(const int num, const Initial *init, Vector *const v
 
     double Ek = 0.0;
     for (int ii=0; ii< num; ii++){
-        Ek += vel[ii]*vel[ii]*init->mass[ii];
+        Ek += vel[ii]*vel[ii]*init->atommass(ii);
     }
     double temperature = Ek/(ndof*KB);
     double factor = sqrt(target/temperature);
@@ -84,7 +84,7 @@ void Thermostat::DPD(const int num, const double *dr_1, const double *dot, doubl
 
 void Thermostat::LA(const int num, const Initial *init, const double *rmass, const Vector *pos, const Nonbonded *nonbonded, Vector * const vel){
 
-    Vector loci, veli;
+    /*Vector loci, veli;
     Vector dij[L2], vij[L2];
     Vector vel_sum[num];
     int pairlist[L2];
@@ -94,7 +94,8 @@ void Thermostat::LA(const int num, const Initial *init, const double *rmass, con
     double dot[L2], miue[L2], deltav[L2];
 
     Vector box, box_2;
-    box.x = init->box[0]; box.y=init->box[1]; box.z=init->box[2];
+    // Correct this for NPT simulations
+    box.x = conf->box[0]; box.y=conf->box[1]; box.z=conf->box[2];
     box_2 = box*0.5;
 
     std::uniform_real_distribution<double> distribution_uniform(0,1.0);
@@ -155,7 +156,7 @@ void Thermostat::LA(const int num, const Initial *init, const double *rmass, con
     }
     for (int index=0; index<num; index++) {
         vel[index] += vel_sum[index];
-    }
+    }*/
 }
 
 Thermostat::Thermostat(const Thermostat& orig) {

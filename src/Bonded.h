@@ -1,26 +1,45 @@
-/*
- * File:   Bonded.h
- * Author: Hadi and Amin
- *
- * Created on September 23, 2015, 9:46 AM
- */
-
 #ifndef BONDED_H
 #define	BONDED_H
 
-#include "Initial.h"
-#include "Vector.h"
+class Initial;
+class Parameters;
+class Vector;
+struct BondElem;
+struct AngleElem;
+struct DihedralElem;
+struct ImproperElem;
+
 
 class Bonded {
 public:
-    Bonded();
-    void Compute_bond(const Initial *init, const Vector *pos,Vector *const ff, const int num, double &Ebond);
-    void Compute_angle(const Initial *init, const Vector *pos,Vector *const ff, const int num, double &Eangle);
-    void Compute_angle_ub(const Initial *init, const Vector *pos,Vector *const ff, const int num, double &Eangle);
-    Bonded(const Bonded& orig);
-    virtual ~Bonded();
-private:
+    // constructor creates the lists of bonds, angles, etc.
+    Bonded(const Initial *, Parameters *);
+    ~Bonded();
 
+    // compute the energy, given the set of coordinates
+    void compute(const Vector *coords, Vector *f, double& Ebond, double& Eangle,
+                   double &Edihedral, double &Eimproper) const;
+
+private:
+    int nbonds;
+    int nangles;
+    int ndihedrals;
+    int nimpropers;
+
+    BondElem *bonds;
+    AngleElem *angles; 
+    DihedralElem *dihedrals;
+    ImproperElem *impropers;
+   
+    void build_bondlist(const Initial *, const Parameters *);
+    void build_anglelist(const Initial *, const Parameters *);
+    void build_dihedrallist(const Initial *, const Parameters *);
+    void build_improperlist(const Initial *, const Parameters *);
+
+    double compute_bonds(const Vector *, Vector *) const;
+    double compute_angles(const Vector *, Vector *) const;
+    double compute_dihedrals(const Vector *, Vector *) const;
+    double compute_impropers(const Vector *, Vector *) const;
 };
 
 #endif	/* BONDED_H */

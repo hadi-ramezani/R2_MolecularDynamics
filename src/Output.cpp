@@ -13,24 +13,26 @@
 Output::Output(const char *filename, const Configure* conf) {
     outf.open(filename);
     if ((strncasecmp(conf->analysis, "on", 2) == 0)){
-        outf << "#Frame Ebond Eangle Evdw Eelec Etotal" << endl;
+        outf << "#Frame Ebond Eangle Edihedral Eimproper Evdw Eelec Etotal" << endl;
     } else {
-        outf << "#Step Time Ebond Eangle Evdw Eelec Ekin Etotal" << endl;
+        outf << "#Step Time Ebond Eangle Edihedral Eimproper Evdw Eelec Ekin Etotal" << endl;
     }
 }
 
-void Output::Print(const int Step, const double Time, const double Ebond, const double Eangle, const double Evdw, const double Eelec, const double Ekin, const double Etotal, const double temp){
-    outf << Step << " " << Time << " " << Ebond << " " << Eangle << " " << Evdw << " " << Eelec << " " << Ekin << " " << Etotal << " " << temp << endl;
+void Output::Print(const int Step, const double Time, const double Ebond, const double Eangle, const double Edihedral, const double Eimproper, 
+    const double Evdw, const double Eelec, const double Ekin, const double Etotal, const double temp){
+    outf << Step << " " << Time << " " << Ebond << " " << Eangle << " " << Edihedral << " " << Eimproper << " " << Evdw << " " << Eelec << " " << Ekin << " " << Etotal << " " << temp << endl;
 //    printf("%10d %10.4f %10.4f %10.4f %10.4f %10.4f %10.4f %10.4f \n",Step, Time, Ebond, Eangle, Evdw, Eelec, Ekin, Etotal);
 }
 
-void Output::Print(const unsigned int frameNum, const double Ebond, const double Eangle, const double Evdw, const double Eelec, const double Etotal) {
-    outf << frameNum << " " << Ebond << " " << Eangle << " " << Evdw << " " << Eelec << " " << Etotal << endl;    
+void Output::Print(const unsigned int frameNum, const double Ebond, const double Eangle, const double Edihedral, const double Eimproper,
+    const double Evdw, const double Eelec, const double Etotal) {
+    outf << frameNum << " " << Ebond << " " << Eangle << " " << Edihedral << " " << Eimproper << " " << Evdw << " " << Eelec << " " << Etotal << endl;    
 }
 
 void Output::wrap(const Initial *init, const double *box, Vector *const pos){
 
-    int iatom = 0;
+    /*int iatom = 0;
     for (int mm=0; mm<init->nresidue; mm++){
         bool flag = true;  // the residue is out of the box
         int hatom = iatom;
@@ -77,7 +79,7 @@ void Output::wrap(const Initial *init, const double *box, Vector *const pos){
                 pos[ii].z = pos[ii].z - floor(pos[ii].z/box[2])*box[2];
             }
         }
-    }
+    }*/
 }
 
 Output::Output(const Output& orig) {
