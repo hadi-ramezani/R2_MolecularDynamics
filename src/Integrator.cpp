@@ -40,13 +40,12 @@ Integrator::Integrator(const Configure *conf, const Initial *init, PDB *pdb, Par
 void Integrator::Loop(const Configure *conf, const Initial *init){
 
     bonded.compute(pos, f, Ebond, Eangle, Edihedral, Eimproper);
-    //nonbonded.compute(init, pos, f, Evdw, Eelec);
-
+    nonbonded.compute(init, pos, f, Evdw, Eelec);
+    Etot = Ebond + Eangle + Edihedral + Eimproper + Evdw + Eelec + Ekin;
     cout << "Running the simulation..." << endl;
 
     for (int step=conf->fstep; step < conf->fstep + conf->nsteps + 1; step++){ // main loop
 
-        Etot = Ebond + Eangle + + Edihedral + Eimproper + Evdw + Eelec + Ekin;
         if (step%conf->dcdFreq == 0) dcd.WriteFrame(conf->numAtoms,pos,conf->box);
         if (step%conf->energyFreq == 0) out.Print(step,step*conf->timestep,Ebond, Eangle, Edihedral, Eimproper, Evdw, Eelec, Ekin, Etot, temperature);
 
@@ -58,7 +57,7 @@ void Integrator::Loop(const Configure *conf, const Initial *init){
         //Compute force at time t+dt
         memset((void *)f, 0, conf->numAtoms*sizeof(Vector));
         bonded.compute(pos, f, Ebond, Eangle, Edihedral, Eimproper);
-        //nonbonded.compute(init, pos, f, Evdw, Eelec);
+        nonbonded.compute(init, pos, f, Evdw, Eelec);
 
         Ekin = 0; 
         for (int ii=0; ii<conf->numAtoms; ii++) {
@@ -68,7 +67,6 @@ void Integrator::Loop(const Configure *conf, const Initial *init){
         Ekin *= 0.5;
 
         Etot = Ebond + Eangle + Edihedral + Eimproper + Evdw + Eelec + Ekin;
-
 
         //if (strcmp(conf->thermostat,"on") == 0) temp.LA(conf->numAtoms,init,rmass,pos,&nonbonded,vel);
     }

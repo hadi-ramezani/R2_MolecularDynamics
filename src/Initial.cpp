@@ -1311,8 +1311,8 @@ void Initial::build_lists_by_atom() {
     //  If the exclusion policy is scaled 1-4, then allocate
     //  an array of int *'s to hold the 1-4 interactions
     //  Allocate them all the time and assume they are there! -JCP
-    /*if (simParams->exclude == SCALED14) { 
-            onefour_exclusions = new int *[numAtoms];
+    //if (simParams->exclude == SCALED14) { 
+            {onefour_exclusions = new int *[numAtoms];
             for (i=0; i<numAtoms; i++) {
                 byAtomSize[i] = 0;
             }
@@ -1338,7 +1338,7 @@ void Initial::build_lists_by_atom() {
                     onefour_exclusions[a1][byAtomSize[a1]++] = a2;
                 }
             }
-    }*/
+    }
 
     delete [] byAtomSize;
 

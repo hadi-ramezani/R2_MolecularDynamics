@@ -40,7 +40,7 @@ void Analysis::run(const Configure *conf, const Initial* init, const PDB *pdb) {
 
         //Compute and print energies
         bonded.compute(pos, f, Ebond, Eangle, Edihedral, Eimproper);
-        //nonbonded.compute(init, pos, f, Evdw, Eelec);
+        nonbonded.compute(init, pos, f, Evdw, Eelec);
         Etot = Ebond + Eangle + Edihedral + Eimproper + Evdw + Eelec;
         out.Print(frameNum, Ebond, Eangle, Edihedral, Eimproper, Evdw, Eelec, Etot);
         frameNum++;

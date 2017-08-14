@@ -188,7 +188,6 @@ void Nonbonded::compute(const Initial *init, const Vector *pos,
                         // get VDW constants
                         Index vdwtype2 = init->atomvdwtype(ind2);
                         const LJTableEntry *entry;
-
                         if (init->check14excl(ind1,ind2))
                             entry = ljTable->table_val_scaled14(vdwtype1, vdwtype2);  
                         else

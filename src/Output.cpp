@@ -6,21 +6,57 @@
 Output::Output(const char *filename, const Configure* conf) {
     outf.open(filename);
     if ((strncasecmp(conf->analysis, "on", 2) == 0)){
-        outf << "#Frame Ebond Eangle Edihedral Eimproper Evdw Eelec Etotal" << endl;
+        
+        outf << setw(width) << right << "#Frame"
+            << setw(width) << right << "Ebond"
+            << setw(width) << right << "Eangle"
+            << setw(width) << right << "Edihedral"
+            << setw(width) << right << "Eimproper"
+            << setw(width) << right << "Evdw"
+            << setw(width) << right << "Eelec"
+            << setw(width) << right << "Etotal" << endl;
+
     } else {
-        outf << "#Step Time Ebond Eangle Edihedral Eimproper Evdw Eelec Ekin Etotal" << endl;
+        outf << setw(width) << right << "#Step" 
+            << setw(width) << right << "Time" 
+            << setw(width) << right << "Ebond"
+            << setw(width) << right << "Eangle"
+            << setw(width) << right << "Edihedral"
+            << setw(width) << right << "Eimproper"
+            << setw(width) << right << "Evdw"
+            << setw(width) << right <<  "Eelec"
+            << setw(width) << right << "Ekin"
+            << setw(width) << right << "Etotal"
+            << setw(width) << right << "Temp" << endl;
     }
 }
 
 void Output::Print(const int Step, const double Time, const double Ebond, const double Eangle, const double Edihedral, const double Eimproper, 
-    const double Evdw, const double Eelec, const double Ekin, const double Etotal, const double temp){
-    outf << Step << " " << Time << " " << Ebond << " " << Eangle << " " << Edihedral << " " << Eimproper << " " << Evdw << " " << Eelec << " " << Ekin << " " << Etotal << " " << temp << endl;
+    const double Evdw, const double Eelec, const double Ekin, const double Etot, const double temp){
+    outf << setw(width) << right << Step 
+        << setw(width) << right << Time 
+        << setw(width) << right << Ebond
+        << setw(width) << right << Eangle
+        << setw(width) << right << Edihedral
+        << setw(width) << right << Eimproper
+        << setw(width) << right << Evdw 
+        << setw(width) << right << Eelec
+        << setw(width) << right << Ekin
+        << setw(width) << right << Etot
+        << setw(width) << right << temp << endl;
 //    printf("%10d %10.4f %10.4f %10.4f %10.4f %10.4f %10.4f %10.4f \n",Step, Time, Ebond, Eangle, Evdw, Eelec, Ekin, Etotal);
 }
 
 void Output::Print(const unsigned int frameNum, const double Ebond, const double Eangle, const double Edihedral, const double Eimproper,
-    const double Evdw, const double Eelec, const double Etotal) {
-    outf << frameNum << " " << Ebond << " " << Eangle << " " << Edihedral << " " << Eimproper << " " << Evdw << " " << Eelec << " " << Etotal << endl;    
+    const double Evdw, const double Eelec, const double Etot) {
+    outf << setw(width) << right << frameNum
+        << setw(width) << right << Ebond 
+        << setw(width) << right << Eangle 
+        << setw(width) << right << Edihedral
+        << setw(width) << right << Eimproper
+        << setw(width) << right << Evdw 
+        << setw(width) << right << Eelec
+        << setw(width) << right << Etot << endl;    
 }
 
 void Output::wrap(const Initial *init, const double *box, Vector *const pos){
