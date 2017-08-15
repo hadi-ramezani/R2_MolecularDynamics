@@ -12,6 +12,7 @@ class PDB;
 
 // List maintaining the global atom indicies sorted by helix groups.
 class Initial {
+
     typedef struct constraint_params {
         double k;        //  Force constant
         Vector refPos;   //  Reference position for restraint
@@ -27,28 +28,28 @@ private:
     Improper *impropers;    //  Array of improper structures
     Exclusion *exclusions;  //  Array of exclusion structures
     UniqueSet<Exclusion> exclusionSet;  //  Used for building
-    int *consIndexes;   //  Constraint indexes for each atom
+    int* consIndexes;   //  Constraint indexes for each atom
     ConstraintParams *consParams;
                 //  Parameters for each atom constrained
-    double *langevinParams;   //  b values for langevin dynamics
-    double *langForceVals;    //  Calculated values for langvin random forces
-    int *fixedAtomFlags;    //  1 for fixed, -1 for fixed group, else 0
-    double *rigidBondLengths;  //  if H, length to parent or 0. or
+    double* langevinParams;   //  b values for langevin dynamics
+    double* langForceVals;    //  Calculated values for langvin random forces
+    int* fixedAtomFlags;    //  1 for fixed, -1 for fixed group, else 0
+    double* rigidBondLengths;  //  if H, length to parent or 0. or
                 //  if not H, length between children or 0.
 
-    int **bondsWithAtom;    //  List of bonds involving each atom
-    int **bondsByAtom;  //  List of bonds owned by each atom
-    int **anglesByAtom;     //  List of angles owned by each atom
-    int **dihedralsByAtom;  //  List of dihedrals owned by each atom
-    int **impropersByAtom;  //  List of impropers owned by each atom
-    int **exclusionsByAtom; //  List of exclusions owned by each atom
+    int* *bondsWithAtom;    //  List of bonds involving each atom
+    int* *bondsByAtom;  //  List of bonds owned by each atom
+    int* *anglesByAtom;     //  List of angles owned by each atom
+    int* *dihedralsByAtom;  //  List of dihedrals owned by each atom
+    int* *impropersByAtom;  //  List of impropers owned by each atom
+    int* *exclusionsByAtom; //  List of exclusions owned by each atom
 
-    int **all_exclusions;
+    int* *all_exclusions;
                 //  List of all exclusions, including
                 //  explicit exclusions and those calculated
                 //  from the bonded structure based on the
                 //  exclusion policy
-    int **onefour_exclusions;
+    int* *onefour_exclusions;
                 //  List of 1-4 interactions.  This list is
                 //  used only if the exclusion policy is 
                 //  scaled1-4 to track 1-4 interactions that
@@ -301,41 +302,6 @@ public:
     void print_bonds(Parameters *); 
     //  Print out list of exclusions
     void print_exclusions();
-
-/*public:
-
-    Vector* pos;
-    double* mass;
-
-    int* residue;
-    int nresidue;
-
-    BondElem *bonds;
-    AngleElem *angles;
-    VdwElem *vdw;
-    DpdElem *dpd;
-    Connections *connections;
-
-    float **aij; // for DPD simulation
-
-    double box[3];
-
-    double gamma, sigma;
-
-    int ntype;
-    float tt[3] = {1,2,3};
-
-    bool exclude(const int iatom, const int jatom) const;
-    bool exclude_dpd(const int iatom, const int jatom) const;
-    void build_bondlist(const Configure *conf, const Molecule *mol, const Parameters *params);
-    void build_anglelist(const Configure *conf, const Molecule *mol, const Parameters *params);
-    void build_vdwlist(const Configure *conf, const Molecule *mol, const Parameters *params);
-    void build_dpdlist(const Configure *conf, const Molecule *mol, const Parameters *params);
-
-    Initial(const Configure *conf, const Molecule *mol, const Parameters *params);
-    virtual ~Initial();
-private:*/
-
 };
 
 #endif	/* INITIAL_H */

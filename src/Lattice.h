@@ -3,181 +3,163 @@
 
 #include <math.h>
 
-struct Transform
-{
-  int i,j,k;  Transform(void) { i=0; j=0; k=0; }
-  int operator==(const Transform &o) const {
-        return ( i==o.i && j==o.j && k==o.k ); }
+struct Transform {
+    int i,j,k;  Transform(void) { i=0; j=0; k=0; }
+    int operator==(const Transform &o) const {
+        return ( i==o.i && j==o.j && k==o.k ); 
+    }
 };
 
-class Lattice
-{
+class Lattice {
+
 public:
-  Lattice(void) : a1(0), a2(0), a3(0) {};
+    Lattice(void) : a1(0), a2(0), a3(0) {};
 
-  // maps a transformation triplet onto a single integer
-  static int index(int i=0, int j=0, int k=0)
-  {
-    return 9 * (k+1) + 3 * (j+1) + (i+1);
-  }
-
-  // sets lattice basis vectors and origin (fixed center)
-  // sets lattice basis vectors and origin (fixed center)
-  void set(Vector A, Vector B, Vector C, Vector Origin)
-  {
-    a1 = A.x;  b1 = ( a1 ? 1. / a1 : 0 );
-    a2 = B.y;  b2 = ( a2 ? 1. / a2 : 0 );
-    a3 = C.z;  b3 = ( a3 ? 1. / a3 : 0 );
-    o = Origin;
-  }
-
-  // rescale lattice dimensions by factor, origin doesn't move
-  void rescale(Vector factor)
-  {
-    a1 *= factor.x;  b1 = ( a1 ? 1. / a1 : 0 );
-    a2 *= factor.y;  b2 = ( a2 ? 1. / a2 : 0 );
-    a3 *= factor.z;  b3 = ( a3 ? 1. / a3 : 0 );
-  }
-
-  // rescale a position, keeping origin constant, assume 3D
-  void rescale(Vector &p, Vector factor) const
-  {
-    p -= o;
-    p.x *= factor.x;
-    p.y *= factor.y;
-    p.z *= factor.z;
-    p += o;
-  }
-
-  // transform scaled position to unscaled position
-  Vector unscale(Vector s) const
-  {
-    return Vector
-    (
-	( a1 ? ( o.x + a1 * s.x ) : s.x ),
-	( a2 ? ( o.y + a2 * s.y ) : s.y ),
-	( a3 ? ( o.z + a3 * s.z ) : s.z )
-    );
-  }
-
-  // transform unscaled position to scaled position
-  Vector scale(Vector p) const
-  {
-    return Vector
-    (
-	( a1 ? ( b1 * ( p.x - o.x ) ) : p.x ),
-	( a2 ? ( b2 * ( p.y - o.y ) ) : p.y ),
-	( a3 ? ( b3 * ( p.z - o.z ) ) : p.z )
-    );
-  }
-
-  // transforms a position nearest to a SCALED reference position
-  Vector nearest(Vector data, Vector ref) const
-  {
-    float tmp;
-    return Vector
-    (
-	( a1 ? ( tmp=b1*(data.x-o.x)-ref.x, o.x+a1*(ref.x+tmp-rint(tmp)) ) : data.x ),
-	( a2 ? ( tmp=b2*(data.y-o.y)-ref.y, o.y+a2*(ref.y+tmp-rint(tmp)) ) : data.y ),
-	( a3 ? ( tmp=b3*(data.z-o.z)-ref.z, o.z+a3*(ref.z+tmp-rint(tmp)) ) : data.z )
-    );
-  }
-
-  // transforms a position nearest to a SCALED reference position
-  // adds transform for later reversal
-  Vector nearest(Vector data, Vector ref, Transform *t) const
-  {
-    float tmp;
-    float rit;
-    Vector v = data;
-    if ( a1 ) {
-      tmp=b1*(data.x-o.x)-ref.x;
-      rit = rint(tmp);
-      v.x = o.x+a1*(ref.x+tmp-rit);
-      t->i -= (int) rit;
+    // maps a transformation triplet onto a single integer
+    static int index(int i=0, int j=0, int k=0) {
+        return 9 * (k+1) + 3 * (j+1) + (i+1);
     }
-    if ( a2 ) {
-      tmp=b2*(data.y-o.y)-ref.y;
-      rit = rint(tmp);
-      v.y = o.y+a2*(ref.y+tmp-rit);
-      t->j -= (int) rit;
+
+    // sets lattice basis vectors and origin (fixed center)
+    // sets lattice basis vectors and origin (fixed center)
+    void set(Vector A, Vector B, Vector C, Vector Origin) {
+        a1 = A.x;  b1 = ( a1 ? 1. / a1 : 0 );
+        a2 = B.y;  b2 = ( a2 ? 1. / a2 : 0 );
+        a3 = C.z;  b3 = ( a3 ? 1. / a3 : 0 );
+        o = Origin;
     }
-    if ( a3 ) {
-      tmp=b3*(data.z-o.z)-ref.z;
-      rit = rint(tmp);
-      v.z = o.z+a3*(ref.z+tmp-rit);
-      t->k -= (int) rit;
+
+    // rescale lattice dimensions by factor, origin doesn't move
+    void rescale(Vector factor) {
+        a1 *= factor.x;  b1 = ( a1 ? 1. / a1 : 0 );
+        a2 *= factor.y;  b2 = ( a2 ? 1. / a2 : 0 );
+        a3 *= factor.z;  b3 = ( a3 ? 1. / a3 : 0 );
     }
-    return v;
-  }
 
-  // reverses cumulative transformations for output
-  Vector reverse_transform(Vector data, const Transform &t) const
-  {
-    return ( data - Vector(t.i*a1, t.j*a2, t.k*a3) );
-  }
-
-  // calculates shortest vector from p2 to p1 (equivalent to p1 - p2)
-  Vector delta(Vector p1, Vector p2) const
-  {
-    Vector result = p1 - p2;
-    result.x -= a1 * rint( b1 * result.x );
-    result.y -= a2 * rint( b2 * result.y );
-    result.z -= a3 * rint( b3 * result.z );
-    return result;
-  }
-
-  // calculates shortest vector from origin to p1 (equivalent to p1 - o)
-  Vector delta(Vector p1) const
-  {
-    Vector result = p1 - o;
-    result.x -= a1 * rint( b1 * result.x );
-    result.y -= a2 * rint( b2 * result.y );
-    result.z -= a3 * rint( b3 * result.z );
-    return result;
-  }
-
-  Vector* create(Vector *d, int n, int i) const
-  {
-    Vector *dt;
-    if ( i != 13 )
-    {
-      dt = new Vector[n];
-      Vector shift( (i%3-1) * a1 , ((i/3)%3-1) * a2 , (i/9-1) * a3 );
-      for( int j = 0; j < n; ++j )
-        dt[j] = d[j] + shift;
+    // rescale a position, keeping origin constant, assume 3D
+    void rescale(Vector &p, Vector factor) const {
+        p -= o;
+        p.x *= factor.x;
+        p.y *= factor.y;
+        p.z *= factor.z;
+        p += o;
     }
-    else
-    {
-      dt = d;
+
+    // transform scaled position to unscaled position
+    Vector unscale(Vector s) const {
+        return Vector
+        (
+	   ( a1 ? ( o.x + a1 * s.x ) : s.x ),
+	   ( a2 ? ( o.y + a2 * s.y ) : s.y ),
+	   ( a3 ? ( o.z + a3 * s.z ) : s.z )
+        );
     }
-    return dt;
-  }
 
-  void destroy(Vector **d, int i) const
-  {
-    if ( i != 13 ) delete [] *d;
-    *d = NULL;
-  }
+    // transform unscaled position to scaled position
+    Vector scale(Vector p) const {
+        return Vector
+        (
+	   ( a1 ? ( b1 * ( p.x - o.x ) ) : p.x ),
+	   ( a2 ? ( b2 * ( p.y - o.y ) ) : p.y ),
+	   ( a3 ? ( b3 * ( p.z - o.z ) ) : p.z )
+        );
+    }
 
-  float a() const { return a1; }
-  float b() const { return a2; }
-  float c() const { return a3; }
+    // transforms a position nearest to a SCALED reference position
+    Vector nearest(Vector data, Vector ref) const {
+        float tmp;
+        return Vector
+        (
+	   ( a1 ? ( tmp=b1*(data.x-o.x)-ref.x, o.x+a1*(ref.x+tmp-rint(tmp)) ) : data.x ),
+	   ( a2 ? ( tmp=b2*(data.y-o.y)-ref.y, o.y+a2*(ref.y+tmp-rint(tmp)) ) : data.y ),
+	   ( a3 ? ( tmp=b3*(data.z-o.z)-ref.z, o.z+a3*(ref.z+tmp-rint(tmp)) ) : data.z )
+        );
+    }
 
-  Vector dimension() const
-  {
-    return Vector(a1,a2,a3);
-  }
+    // transforms a position nearest to a SCALED reference position
+    // adds transform for later reversal
+    Vector nearest(Vector data, Vector ref, Transform *t) const {
+        float tmp;
+        float rit;
+        Vector v = data;
+        if ( a1 ) {
+            tmp=b1*(data.x-o.x)-ref.x;
+            rit = rint(tmp);
+            v.x = o.x+a1*(ref.x+tmp-rit);
+            t->i -= (int) rit;
+        }
+        if ( a2 ) {
+            tmp=b2*(data.y-o.y)-ref.y;
+            rit = rint(tmp);
+            v.y = o.y+a2*(ref.y+tmp-rit);
+            t->j -= (int) rit;
+        }
+        if ( a3 ) {
+            tmp=b3*(data.z-o.z)-ref.z;
+            rit = rint(tmp);
+            v.z = o.z+a3*(ref.z+tmp-rit);
+            t->k -= (int) rit;
+        }
+        return v;
+    }
 
-  Vector origin() const
-  {
-    return o;
-  }
+    // reverses cumulative transformations for output
+    Vector reverse_transform(Vector data, const Transform &t) const {
+        return ( data - Vector(t.i*a1, t.j*a2, t.k*a3) );
+    }
 
-  float volume(void) const
-  {
-    return ( a1 * a2 * a3 );
-  }
+    // calculates shortest vector from p2 to p1 (equivalent to p1 - p2)
+    Vector delta(Vector p1, Vector p2) const {
+        Vector result = p1 - p2;
+        result.x -= a1 * rint( b1 * result.x );
+        result.y -= a2 * rint( b2 * result.y );
+        result.z -= a3 * rint( b3 * result.z );
+        return result;
+    }
+
+    // calculates shortest vector from origin to p1 (equivalent to p1 - o)
+    Vector delta(Vector p1) const {
+        Vector result = p1 - o;
+        result.x -= a1 * rint( b1 * result.x );
+        result.y -= a2 * rint( b2 * result.y );
+        result.z -= a3 * rint( b3 * result.z );
+        return result;
+    }
+
+    Vector* create(Vector *d, int n, int i) const {
+        Vector *dt;
+        if ( i != 13 ) {
+            dt = new Vector[n];
+            Vector shift( (i%3-1) * a1 , ((i/3)%3-1) * a2 , (i/9-1) * a3 );
+            for( int j = 0; j < n; ++j )
+                dt[j] = d[j] + shift;
+        }
+        else {
+            dt = d;
+        }
+        return dt;
+    }
+
+    void destroy(Vector **d, int i) const {
+        if ( i != 13 ) delete [] *d;
+        *d = NULL;
+        }
+
+        float a() const { return a1; }
+        float b() const { return a2; }
+        float c() const { return a3; }
+
+        Vector dimension() const {
+            return Vector(a1,a2,a3);
+        }
+
+        Vector origin() const {
+            return o;
+        }
+
+        float volume(void) const {
+            return ( a1 * a2 * a3 );
+        }
 
 private:
   float a1,a2,a3; // real lattice vectors (eventually)

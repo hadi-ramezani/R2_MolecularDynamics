@@ -113,9 +113,9 @@ private:
     int NumVdwParamsAssigned;   //  Number actually assigned
     int NumVdwPairParams;       //  Number of vdw_pair params
 
-    int *maxDihedralMults;      //  Max multiplicity for
+    int* maxDihedralMults;      //  Max multiplicity for
                                 //  dihedral bonds
-    int *maxImproperMults;      //  Max multiplicity for
+    int* maxImproperMults;      //  Max multiplicity for
                                 //  improper bonds
 
     void add_bond_param(char *);              //  Add a bond parameter

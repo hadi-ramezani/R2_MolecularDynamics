@@ -3,12 +3,6 @@
 #include "Initial.h"
 #include "LJTable.h"
 
-struct atominfo {
-  Vector pos;
-  Vector force;
-  int ind;
-};
-
 Nonbonded::Nonbonded(const Initial *init, 
                                    const Parameters *params,
                                    const Configure *conf) {
@@ -24,6 +18,9 @@ Nonbonded::Nonbonded(const Initial *init,
     c1 = c1*c1*c1;
     c3 = 4*c1;
     ljTable = new LJTable(params);
+    
+    poshift = new Vector[natoms];
+    memset((void *)poshift, 0, natoms*sizeof(Vector));
 }
 
 
@@ -31,50 +28,96 @@ Nonbonded::~Nonbonded() {
     delete ljTable;
 }
 
-void Nonbonded::compute(const Initial *init, const Vector *pos,
-                               Vector *f, double& Evdw, double& Eelec) {
-
-    int xb, yb, zb, xytotb, totb;               // dimensions of decomposition
-
-    atominfo* *boxatom;       // positions, forces, and indicies for each atom  
-    int *numinbox, *maxinbox; // Number of atoms in each box
-    int **nbrlist;            // List of neighbors for each box
+void Nonbonded::Build_cells(const Initial *init, const Vector *pos, Vector *f, const Configure *conf) {
 
     int i, j, aindex;
 
-    //
-    // find min/max bounds of Initial's coordinates
-    //
-
-    double xmin, xmax, ymin, ymax, zmin, zmax;  // extent of atomic coordinates
-    for(i=0; i < natoms; i++) {
-        const Vector *loc = pos+i;
-        if(i==0) {
-            xmin = xmax = loc->x; ymin = ymax = loc->y; zmin = zmax = loc->z;
-        } 
-        else {
-            if(loc->x < xmin) xmin = loc->x;
-            else if(loc->x > xmax) xmax = loc->x;
-            if(loc->y < ymin) ymin = loc->y;
-            else if(loc->y > ymax) ymax = loc->y;
-            if(loc->z < zmin) zmin = loc->z;
-            else if(loc->z > zmax) zmax = loc->z;
-        }
-    }
- 
     // from size of Initial, break up space into boxes of dimension pairlistdist
     // Since I'm recreating the pairlist each time, there's no need to make the
     // boxes any bigger than the cutoff length.
 
-    float pairdist = sqrt(cut2);
-    xb = (int)((xmax - xmin) / pairdist) + 1;
-    yb = (int)((ymax - ymin) / pairdist) + 1;
-    zb = (int)((zmax - zmin) / pairdist) + 1;
+    float pairdist = sqrt(pair2);
+    xb = int(conf->box[0] / pairdist) + 1;
+    yb = int(conf->box[1] / pairdist) + 1;
+    zb = int(conf->box[2] / pairdist) + 1;
+    xytotb = yb * xb;
+    totb = xytotb * zb;
+
+    nbrlist = new int *[totb];
+
+    //
+    // Create neighbor list for each box
+    //
+    aindex = 0;
+    int xnb = 0, ynb = 0, znb = 0;
+    for (int zi=0; zi<zb; zi++) {
+        for (int yi=0; yi<yb; yi++) {
+            for (int xi=0; xi<xb; xi++) {
+                int nbrs[14];           // Max possible number of neighbors in 3D
+                int n=0;                // Number of neighbors found so far
+                nbrs[n++] = aindex;     // Always include self
+                int counter = 0;
+                for (int xx = -1; xx < 2; xx++){
+                    for (int yy = -1; yy < 2; yy++){
+                        for (int zz = -1; zz < 2; zz++){
+                            znb = zi + zz;
+                            if (znb < 0) znb = zb -1;
+                            else if (znb == zb) znb = 0;
+
+                            ynb = yi + yy;
+                            if (ynb < 0 ) ynb = yb -1;
+                            else if (ynb == yb) ynb = 0;
+
+                            xnb = xi + xx;
+                            if (xnb < 0 ) xnb = xb -1;
+                            else if (xnb == xb) xnb = 0;
+
+                            aindex = znb * xytotb + ynb * xb + xnb;
+                            if ((xx + yy + zz) !=0 && counter < 13){
+                                nbrs[n++] = aindex;           
+                                counter++;          
+                            }
+                        }
+                    }
+                }
+                nbrlist[aindex] = new int[n+1];
+                memcpy((void *)nbrlist[aindex], (void *)nbrs, n*sizeof(int));
+                nbrlist[aindex][n] = -1;  // Sentinel for end of neighbors
+                aindex++;
+
+            }
+        }
+    }
+}
+
+
+void Nonbonded::compute(const Initial *init, const Vector *pos,
+                               Vector *f, double& Evdw, double& Eelec, const Configure *conf) {
+
+    int i, j, aindex;
+    float pairdist = sqrt(pair2);
+    
+    double box_2[3];
+    box_2[0] = conf->box[0]*0.5; box_2[1] = conf->box[1]*0.5; box_2[2] = conf->box[2]*0.5;
+
+    Build_cells(init, pos, f, conf);
+
+    // shift atom coordinates inside the box (wrap) for nonbonded calculations
+    // Currently we assume the origin is at (0, 0, 0)
+    // I'll change this in the future if needed
+    for (int i=0; i<natoms; i++){ // For a box with the origin at the lower left vertex
+        poshift[i].x = pos[i].x - floor(pos[i].x/conf->box[0]) * conf->box[0];
+        poshift[i].y = pos[i].y - floor(pos[i].y/conf->box[1]) * conf->box[1];
+        poshift[i].z = pos[i].z - floor(pos[i].z/conf->box[2]) * conf->box[2];
+    }
+
+    double pairdistx = conf->box[0]/xb + 0.001; // add small number to make sure all particles are located in the cells
+    double pairdisty = conf->box[1]/yb + 0.001; // avoid the problem for particles located on the border
+    double pairdistz = conf->box[2]/zb + 0.001;
     xytotb = yb * xb;
     totb = xytotb * zb;
 
     boxatom = new atominfo*[totb];
-    nbrlist = new int *[totb];
     numinbox = new int[totb];
     maxinbox = new int[totb];
     memset((void *)numinbox, 0,totb*sizeof(int));
@@ -84,11 +127,11 @@ void Nonbonded::compute(const Initial *init, const Vector *pos,
     // Put all the atoms into their box
     //
     for (i=0; i<natoms; i++) {
-        const Vector *loc = pos+i;
+        const Vector *loc = poshift + i;
         const Vector *force = f+i;
-        int axb = (int)((loc->x - xmin) / pairdist);
-        int ayb = (int)((loc->y - ymin) / pairdist);
-        int azb = (int)((loc->z - zmin) / pairdist);
+        int axb = (int)(loc->x / pairdistx);
+        int ayb = (int)(loc->y / pairdisty);
+        int azb = (int)(loc->z / pairdistz);
         aindex = azb * xytotb + ayb * xb + axb;
         if (numinbox[aindex] == 0) {   // First atom in the box
             maxinbox[aindex] = 10;
@@ -108,42 +151,6 @@ void Nonbonded::compute(const Initial *init, const Vector *pos,
         numinbox[aindex]++;
     } 
     delete [] maxinbox;
-
-    //
-    // Create neighbor list for each box
-    //
-    aindex = 0;
-    for (int zi=0; zi<zb; zi++) {
-        for (int yi=0; yi<yb; yi++) {
-            for (int xi=0; xi<xb; xi++) {
-                int nbrs[14];           // Max possible number of neighbors in 3D
-                int n=0;                // Number of neighbors found so far
-                nbrs[n++] = aindex;     // Always include self
-                if (xi < xb-1) nbrs[n++] = aindex + 1;
-                if (yi < yb-1) nbrs[n++] = aindex + xb;
-                if (zi < zb-1) nbrs[n++] = aindex + xytotb;
-                if (xi < (xb-1) && yi < (yb-1)) nbrs[n++] = aindex + xb + 1;
-                if (xi < (xb-1) && zi < (zb-1)) nbrs[n++] = aindex + xytotb + 1;
-                if (yi < (yb-1) && zi < (zb-1)) nbrs[n++] = aindex + xytotb + xb;
-                if (xi < (xb-1) && yi > 0)      nbrs[n++] = aindex - xb + 1;
-                if (xi > 0 && zi < (zb-1))     nbrs[n++] = aindex + xytotb - 1;
-                if (yi > 0 && zi < (zb-1))     nbrs[n++] = aindex + xytotb - xb;
-                if (xi < (xb-1) && yi < (yb-1) && zi < (zb-1))
-                    nbrs[n++] = aindex + xytotb + xb + 1;
-                if (xi > 0 && yi < (yb-1) && zi < (zb-1))
-                    nbrs[n++] = aindex + xytotb + xb - 1; 
-                if (xi < (xb-1) && yi > 0 && zi < (zb-1))
-                    nbrs[n++] = aindex + xytotb - xb + 1;
-                if (xi > 0 && yi > 0 && zi < (zb-1))
-                    nbrs[n++] = aindex + xytotb - xb - 1;
-        
-                nbrlist[aindex] = new int[n+1];
-                memcpy((void *)nbrlist[aindex], (void *)nbrs, n*sizeof(int));
-                nbrlist[aindex][n] = -1;  // Sentinel for end of neighbors
-                aindex++;
-            }
-        }
-    }
 
     //
     // Loop over boxes, and compute the interactions between each box and
@@ -168,6 +175,13 @@ void Nonbonded::compute(const Initial *init, const Vector *pos,
                 int num = numinbox[*nbr];
                 for (j=startj; j<num; j++) {
                     Vector dr = nbrbox[j].pos - tmppos;
+                    // PBC
+                    if (dr.x>box_2[0]) dr.x -= conf->box[0];
+                    else if (dr.x<=-box_2[0]) dr.x += conf->box[0];
+                    if (dr.y>box_2[1]) dr.y -= conf->box[1];
+                    else if (dr.y<=-box_2[1]) dr.y += conf->box[1];
+                    if (dr.z>box_2[2]) dr.z -= conf->box[2];
+                    else if (dr.z<=-box_2[2]) dr.z += conf->box[2];
                     double dist = dr.length2();
                     if(dist > cut2) continue;   
                     int ind2 = nbrbox[j].ind;

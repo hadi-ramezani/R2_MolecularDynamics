@@ -21,11 +21,11 @@ public:
     Trajectory dcd;
     Output out;
 
-    Vector *pos;
-    Vector *vel;
-    Vector *vel2;
-    Vector *f;
-    double *imass;
+    Vector* pos;
+    Vector* vel;
+    Vector* vel2;
+    Vector* f;
+    double* imass;
     double aBox[3];
 
     double Etot = 0.0, Ebond = 0.0, Eangle = 0.0, Evdw = 0.0, Eelec = 0.0;
