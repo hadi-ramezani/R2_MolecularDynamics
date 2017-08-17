@@ -30,9 +30,6 @@ Nonbonded::~Nonbonded() {
 
 void Nonbonded::Build_cells(const Initial *init, const Vector *pos, Vector *f, const Configure *conf) {
 
-    // from size of Initial, break up space into boxes of dimension pairlistdist
-    // Since I'm recreating the pairlist each time, there's no need to make the
-    // boxes any bigger than the cutoff length.
 
     double pairdist = conf->pairlistdist;
 
@@ -47,7 +44,19 @@ void Nonbonded::Build_cells(const Initial *init, const Vector *pos, Vector *f, c
 
     //
     // Create neighbor list for each cell
-    //
+    /* How to construct a cell list? Let assume we have a 3*3*3 grid.
+       In our calculations, we only need to count 14 neighbors because we loop
+       over all boxes and we don't want to double count things. However, we need
+       to be careful to do this corretly. The correct neighbor cells include a 
+       L-shaped list (4 neighbors) plus a row above the cell (9 cells). For example,
+       the neighbors of cell 13 here are cells 16, 17, 14, 11 and the whole top 
+       row (18, 19, 20, 21, 22, 23, 24, 25, 26). In the periodic calculations, we 
+       just need to account for the periodic neighbors.
+    Bottom row: 6  7  8   Middle row:  15  16  17  Top row:  24  25  26
+                3  4  5                12  13  14            21  22  23
+                0  1  2                 9  10  11            18  19  20
+    */
+
     int xnb = 0, ynb = 0, znb = 0;
     int aindex = 0, aindexNB = 0;
     for (int zi=0; zi<zb; zi++) {
@@ -59,7 +68,7 @@ void Nonbonded::Build_cells(const Initial *init, const Vector *pos, Vector *f, c
                 aindex = zi * xytotb + yi * xb + xi;
                 nbrs[n++] = aindex;
                 int counter = 1;
-
+                // Find neighbors and take care of PBC
                 for (int zz = 0; zz < 2; zz++){
                     for (int yy = -1; yy < 2; yy++){
                         for (int xx = -1; xx < 2; xx++){
@@ -107,9 +116,11 @@ void Nonbonded::Build_Neighborlist(const Initial *init, const Vector *pos, Vecto
         poshift[i].y = pos[i].y - floor(pos[i].y/conf->box[1]) * conf->box[1];
         poshift[i].z = pos[i].z - floor(pos[i].z/conf->box[2]) * conf->box[2];
     }
-
-    double pairdistx = conf->box[0]/xb + 0.001; // add small number to make sure all particles are located in the cells
-    double pairdisty = conf->box[1]/yb + 0.001; // avoid the problem for particles located on the border
+    
+    // add small number to make sure all particles are located in the cells
+    // avoid the problem for particles located on the border
+    double pairdistx = conf->box[0]/xb + 0.001; 
+    double pairdisty = conf->box[1]/yb + 0.001; 
     double pairdistz = conf->box[2]/zb + 0.001;
 
     boxatom = new atominfo*[totb];
