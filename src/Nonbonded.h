@@ -33,6 +33,7 @@ public:
     void compute(const Initial *init, const Vector *pos, 
                    Vector *f, double& Evdw, double &Eelec, const Configure *conf);
     void Build_cells(const Initial *init, const Vector *pos, Vector *f, const Configure *conf);
+    void Build_Neighborlist(const Initial *init, const Vector *pos, Vector *f, const Configure *conf);
 
     Vector *poshift; // Keep the location of shifted atoms for nonbonded calculation
 
