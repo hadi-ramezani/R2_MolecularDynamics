@@ -23,12 +23,7 @@ Nonbonded::Nonbonded(const Initial *init,
     memset((void *)poshift, 0, natoms*sizeof(Vector));
 }
 
-
-Nonbonded::~Nonbonded() {
-    delete ljTable;
-}
-
-void Nonbonded::Build_cells(const Initial *init, const Vector *pos, Vector *f, const Configure *conf) {
+void Nonbonded::build_cells(const Initial *init, const Vector *pos, Vector *f, const Configure *conf) {
 
 
     double pairdist = conf->pairlistdist;
@@ -104,7 +99,7 @@ void Nonbonded::Build_cells(const Initial *init, const Vector *pos, Vector *f, c
     }
 }
 
-void Nonbonded::Build_Neighborlist(const Initial *init, const Vector *pos, Vector *f, const Configure *conf){
+void Nonbonded::build_neighborlist(const Initial *init, const Vector *pos, Vector *f, const Configure *conf){
     
     int aindex;
     
@@ -165,9 +160,6 @@ void Nonbonded::compute(const Initial *init, const Vector *pos,
     
     double box_2[3];
     box_2[0] = conf->box[0]*0.5; box_2[1] = conf->box[1]*0.5; box_2[2] = conf->box[2]*0.5;
-
-    Build_cells(init, pos, f, conf);
-    Build_Neighborlist(init, pos, f, conf);
 
     // Loop over cells, and compute the interactions between each cell and
     // its neighbors.
@@ -255,7 +247,82 @@ void Nonbonded::compute(const Initial *init, const Vector *pos,
         f[boxatom[i][j].ind] = boxatom[i][j].force;
         }
     }
-  
+}
+
+void Nonbonded::compute_threebody(const Initial *init, const Vector *pos,
+                               Vector *f, double& Emisc, const Configure *conf) {
+
+    
+    double box_2[3];
+    box_2[0] = conf->box[0]*0.5; box_2[1] = conf->box[1]*0.5; box_2[2] = conf->box[2]*0.5;
+
+    // Loop over cells, and compute the interactions between each cell and
+    // its neighbors.
+
+    Emisc = 0;
+    for (int aindex = 0; aindex<totb; aindex++) {  
+        atominfo *tmpbox = boxatom[aindex];
+        int *tmpnbr = nbrlist[aindex];
+        for (int *nbr = tmpnbr; *nbr != -1; nbr++) {  
+            atominfo *nbrbox = boxatom[*nbr];
+            for (int i=0; i<numinbox[aindex]; i++) {  
+                register Vector tmpf;
+                register Vector tmppos = tmpbox[i].pos;
+                int ind1 = tmpbox[i].ind;
+                Index vdwtype1 = init->atomvdwtype(ind1);
+                int startj = 0;
+                if (aindex == *nbr) startj = i+1;
+                int num = numinbox[*nbr];
+                for (int j=startj; j<num; j++) {   
+                    Vector dr = nbrbox[j].pos - tmppos;
+                    // PBC
+                    if (dr.x > box_2[0]) dr.x -= conf->box[0];
+                    else if (dr.x <= -box_2[0]) dr.x += conf->box[0];
+                    if (dr.y > box_2[1]) dr.y -= conf->box[1];
+                    else if (dr.y <= -box_2[1]) dr.y += conf->box[1];
+                    if (dr.z > box_2[2]) dr.z -= conf->box[2];
+                    else if (dr.z <= -box_2[2]) dr.z += conf->box[2];
+                    double dist = dr.length2();
+                    if(dist > cut2) continue;   
+                    int ind2 = nbrbox[j].ind;
+                    if (!init->checkexcl(ind1, ind2)) {  // exclusion check 
+                        double r = sqrt(dist);
+                        double r_1 = 1.0/r; 
+                        double r_2 = r_1*r_1;
+                        double r_6 = r_2*r_2*r_2;
+                        double r_12 = r_6*r_6;
+                        double switchVal = 1, dSwitchVal = 0;
+                        if (dist > switch2) {
+                            // applying the switch 
+                            // see http://localscf.com/localscf.com/LJPotential.aspx.html for details
+                            double c2 = cut2 - dist;
+                            double c4 = c2*(cut2 + 2*dist - 3.0*switch2);
+                            switchVal = c2*c4*c1;
+                            dSwitchVal = c3*r*(c2*c2-c4);
+                        }
+
+                        // get VDW constants
+                        Index vdwtype2 = init->atomvdwtype(ind2);
+                        const LJTableEntry *entry;
+                        if (init->check14excl(ind1,ind2))
+                            entry = ljTable->table_val_scaled14(vdwtype1, vdwtype2); 
+                        else
+                            entry = ljTable->table_val(vdwtype1, vdwtype2);
+
+                        double vdwA = entry->A;
+                        double vdwB = entry->B;
+                        double AmBterm = (vdwA * r_6 - vdwB)*r_6;
+                        Emisc += switchVal*AmBterm;
+
+                    } // exclusion check 
+                }  
+            }     
+        }       
+    }       
+}
+
+Nonbonded::~Nonbonded() {
+    delete ljTable;
     // free up the storage space allocted for the grid search
     for(int i=0; i < totb; i++) {
         if (numinbox[i])  delete [] boxatom[i];

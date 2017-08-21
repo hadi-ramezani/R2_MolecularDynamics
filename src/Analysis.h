@@ -30,9 +30,9 @@ public:
 
     double Etot = 0.0, Ebond = 0.0, Eangle = 0.0, Evdw = 0.0, Eelec = 0.0;
     double Edihedral = 0.0 , Eimproper = 0.0;
+    double Emisc = 0.0;
 
     Analysis(const Configure *conf, const Initial *init, const PDB *pdb, Parameters *params);
-    void run(const Configure *conf, const Initial *init, const PDB *pdb);
     virtual ~Analysis();
 };
 

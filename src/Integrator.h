@@ -31,12 +31,12 @@ public:
 
     double Ebond = 0.0, Eangle = 0.0, Edihedral = 0.0 , Eimproper = 0.0;
     double Evdw = 0.0, Eelec = 0.0, Ekin = 0.0, Etot = 0.0;
+    double Emisc = 0.0;
     double temperature;
     double dt, KB, lambdaDt;
     const double dtfac = 1.0/TIMEFACTOR;
 
-    void Loop(const Configure *conf, const Initial *init);
-    void Loop_dpd(const Configure *conf, const Initial *init);
+    void loop(const Configure *conf, const Initial *init);
     Integrator(const Configure *conf, const Initial *init, PDB *pdb, Parameters *params);
     virtual ~Integrator();
 private:

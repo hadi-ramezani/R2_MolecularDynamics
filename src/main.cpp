@@ -12,6 +12,7 @@
 #include "Integrator.h"
 #include "Nonbonded.h"
 #include "Analysis.h"
+#include "ThreeBody.h"
 
 void R2_die(const char *s) {
   printf("%s\n",s);
@@ -63,11 +64,13 @@ int main(int argc, char** argv) {
     Integrator run(&conf,&init, &pdb, &params); // Main class for MD code
 
     if (strncasecmp(conf.analysis, "on", 2) == 0){
-        Analysis analysis(&conf, &init, &pdb, &params);
-        analysis.run(&conf, &init, &pdb);
+        if (strncasecmp(conf.aMode, "3body", 4) == 0) {
+            ThreeBody threebody(&conf, &init, &pdb, &params);
+            threebody.run(&conf, &init, &pdb);            
+        }
     }
     else {
-        run.Loop(&conf, &init);
+        run.loop(&conf, &init);
     }
 
     // Simulation Time

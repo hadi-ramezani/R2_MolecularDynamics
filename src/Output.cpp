@@ -14,6 +14,7 @@ Output::Output(const char *filename, const Configure* conf) {
             << setw(width) << right << "Eimproper"
             << setw(width) << right << "Evdw"
             << setw(width) << right << "Eelec"
+            << setw(width) << right << "Emisc"
             << setw(width) << right << "Etotal" << endl;
 
     } else {
@@ -31,7 +32,8 @@ Output::Output(const char *filename, const Configure* conf) {
     }
 }
 
-void Output::Print(const int Step, const double Time, const double Ebond, const double Eangle, const double Edihedral, const double Eimproper, 
+// Normal simulation
+void Output::print(const int Step, const double Time, const double Ebond, const double Eangle, const double Edihedral, const double Eimproper, 
     const double Evdw, const double Eelec, const double Ekin, const double Etot, const double temp){
     outf << setw(width) << right << Step 
         << setw(width) << right << Time 
@@ -47,8 +49,10 @@ void Output::Print(const int Step, const double Time, const double Ebond, const 
 //    printf("%10d %10.4f %10.4f %10.4f %10.4f %10.4f %10.4f %10.4f \n",Step, Time, Ebond, Eangle, Evdw, Eelec, Ekin, Etotal);
 }
 
-void Output::Print(const unsigned int frameNum, const double Ebond, const double Eangle, const double Edihedral, const double Eimproper,
-    const double Evdw, const double Eelec, const double Etot) {
+// Analysis output
+void Output::print(const unsigned int frameNum, const double Ebond, const double Eangle, const double Edihedral, const double Eimproper,
+    const double Evdw, const double Eelec, const double Emisc, const double Etot) {
+    
     outf << setw(width) << right << frameNum
         << setw(width) << right << Ebond 
         << setw(width) << right << Eangle 
@@ -56,6 +60,7 @@ void Output::Print(const unsigned int frameNum, const double Ebond, const double
         << setw(width) << right << Eimproper
         << setw(width) << right << Evdw 
         << setw(width) << right << Eelec
+        << setw(width) << right << Emisc
         << setw(width) << right << Etot << endl;    
 }
 

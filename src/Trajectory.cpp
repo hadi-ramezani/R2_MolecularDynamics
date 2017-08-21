@@ -12,13 +12,13 @@ using namespace std;
 
 Trajectory::Trajectory(const char *filename, int natoms, const Configure *conf) {
     if (!(strncasecmp(conf->analysis, "on", 2) == 0)){
-        WriteHeader(filename, natoms);        
+        write_header(filename, natoms);        
     } else {
-        ReadHeader(filename, natoms);
+        read_header(filename, natoms);
     }
 }
 
-void Trajectory::WriteHeader(const char *filename,int natoms) {
+void Trajectory::write_header(const char *filename,int natoms) {
 
     int out;
     char buff[80];
@@ -79,7 +79,7 @@ void Trajectory::WriteHeader(const char *filename,int natoms) {
     boxdcd = new double[6];
 }
 
-void Trajectory::ReadHeader(const char *filename, int natoms) {
+void Trajectory::read_header(const char *filename, int natoms) {
 
     int out;
     char buff[80];
@@ -138,7 +138,7 @@ void Trajectory::ReadHeader(const char *filename, int natoms) {
 }
 
 
-void Trajectory::WriteFrame(int natoms, const Vector *coor, const double *box)  {
+void Trajectory::write_frame(int natoms, const Vector *coor, const double *box)  {
 
 
     boxdcd[0]=box[0];boxdcd[1]=90.0; boxdcd[2]=box[1];
@@ -170,7 +170,7 @@ void Trajectory::WriteFrame(int natoms, const Vector *coor, const double *box)  
 
 }
 
-bool Trajectory::ReadFrame(int natoms, Vector* pos, double* aBox)  {
+bool Trajectory::read_frame(int natoms, Vector* pos, double* aBox)  {
 
     int out;
 

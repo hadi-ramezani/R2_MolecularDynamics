@@ -46,7 +46,7 @@ public:
     int numAngles;
 
     char analysis[3];
-    char aMode[10] = "off";
+    char aMode[10] = "3body";
     char aDcdName[80] = {0};
 
     Configure();

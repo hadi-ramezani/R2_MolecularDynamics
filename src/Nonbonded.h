@@ -32,8 +32,11 @@ public:
 
     void compute(const Initial *init, const Vector *pos, 
                    Vector *f, double& Evdw, double &Eelec, const Configure *conf);
-    void Build_cells(const Initial *init, const Vector *pos, Vector *f, const Configure *conf);
-    void Build_Neighborlist(const Initial *init, const Vector *pos, Vector *f, const Configure *conf);
+    void build_cells(const Initial *init, const Vector *pos, Vector *f, const Configure *conf);
+    void build_neighborlist(const Initial *init, const Vector *pos, Vector *f, const Configure *conf);
+
+    void compute_threebody(const Initial *init, const Vector *pos, 
+                   Vector *f, double& Emisc, const Configure *conf);
 
     Vector *poshift; // Keep the location of shifted atoms for nonbonded calculation
 

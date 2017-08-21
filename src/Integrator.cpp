@@ -37,17 +37,19 @@ Integrator::Integrator(const Configure *conf, const Initial *init, PDB *pdb, Par
     KB=0.001987191;
 }
 
-void Integrator::Loop(const Configure *conf, const Initial *init){
+void Integrator::loop(const Configure *conf, const Initial *init){
 
     bonded.compute(pos, f, Ebond, Eangle, Edihedral, Eimproper);
+    nonbonded.build_cells(init, pos, f, conf);
+    nonbonded.build_neighborlist(init, pos, f, conf);
     nonbonded.compute(init, pos, f, Evdw, Eelec, conf);
     Etot = Ebond + Eangle + Edihedral + Eimproper + Evdw + Eelec + Ekin;
     cout << "Running the simulation..." << endl;
 
     for (int step=conf->fstep; step < conf->fstep + conf->nsteps + 1; step++){ // main loop
 
-        if (step%conf->dcdFreq == 0) dcd.WriteFrame(conf->numAtoms,pos,conf->box);
-        if (step%conf->energyFreq == 0) out.Print(step,step*conf->timestep,Ebond, Eangle, Edihedral, Eimproper, Evdw, Eelec, Ekin, Etot, temperature);
+        if (step%conf->dcdFreq == 0) dcd.write_frame(conf->numAtoms,pos,conf->box);
+        if (step%conf->energyFreq == 0) out.print(step,step*conf->timestep,Ebond, Eangle, Edihedral, Eimproper, Evdw, Eelec, Ekin, Etot, temperature);
 
         for (int ii=0; ii<conf->numAtoms; ii++){ // Velocity Verlet
             pos[ii] += dt*vel[ii] + 0.5*dt*dt*f[ii]*imass[ii];
