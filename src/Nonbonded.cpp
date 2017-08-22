@@ -2,6 +2,7 @@
 #include "Parameters.h"
 #include "Initial.h"
 #include "LJTable.h"
+#include <math.h>
 
 Nonbonded::Nonbonded(const Initial *init, 
                                    const Parameters *params,
@@ -266,55 +267,74 @@ void Nonbonded::compute_threebody(const Initial *init, const Vector *pos,
         for (int *nbr = tmpnbr; *nbr != -1; nbr++) {  
             atominfo *nbrbox = boxatom[*nbr];
             for (int i=0; i<numinbox[aindex]; i++) {  
-                register Vector tmpf;
                 register Vector tmppos = tmpbox[i].pos;
                 int ind1 = tmpbox[i].ind;
-                Index vdwtype1 = init->atomvdwtype(ind1);
+                //Index vdwtype1 = init->atomvdwtype(ind1);
                 int startj = 0;
                 if (aindex == *nbr) startj = i+1;
+
                 int num = numinbox[*nbr];
-                for (int j=startj; j<num; j++) {   
-                    Vector dr = nbrbox[j].pos - tmppos;
-                    // PBC
-                    if (dr.x > box_2[0]) dr.x -= conf->box[0];
-                    else if (dr.x <= -box_2[0]) dr.x += conf->box[0];
-                    if (dr.y > box_2[1]) dr.y -= conf->box[1];
-                    else if (dr.y <= -box_2[1]) dr.y += conf->box[1];
-                    if (dr.z > box_2[2]) dr.z -= conf->box[2];
-                    else if (dr.z <= -box_2[2]) dr.z += conf->box[2];
-                    double dist = dr.length2();
-                    if(dist > cut2) continue;   
-                    int ind2 = nbrbox[j].ind;
-                    if (!init->checkexcl(ind1, ind2)) {  // exclusion check 
-                        double r = sqrt(dist);
-                        double r_1 = 1.0/r; 
-                        double r_2 = r_1*r_1;
-                        double r_6 = r_2*r_2*r_2;
-                        double r_12 = r_6*r_6;
-                        double switchVal = 1, dSwitchVal = 0;
-                        if (dist > switch2) {
-                            // applying the switch 
-                            // see http://localscf.com/localscf.com/LJPotential.aspx.html for details
-                            double c2 = cut2 - dist;
-                            double c4 = c2*(cut2 + 2*dist - 3.0*switch2);
-                            switchVal = c2*c4*c1;
-                            dSwitchVal = c3*r*(c2*c2-c4);
-                        }
+                for (int j=startj; j<num; j++) {
+                    
+                    int startk = 0;
+                    if (aindex == *nbr) startk = startj+1;
 
-                        // get VDW constants
-                        Index vdwtype2 = init->atomvdwtype(ind2);
-                        const LJTableEntry *entry;
-                        if (init->check14excl(ind1,ind2))
-                            entry = ljTable->table_val_scaled14(vdwtype1, vdwtype2); 
-                        else
-                            entry = ljTable->table_val(vdwtype1, vdwtype2);
+                    for (int k = startk; k < num; k++) {   
 
-                        double vdwA = entry->A;
-                        double vdwB = entry->B;
-                        double AmBterm = (vdwA * r_6 - vdwB)*r_6;
-                        Emisc += switchVal*AmBterm;
+                        Vector dr12 = nbrbox[j].pos - tmppos;
+                        Vector dr13 = nbrbox[k].pos - tmppos;
+                        Vector dr23 = nbrbox[k].pos - nbrbox[j].pos;
 
-                    } // exclusion check 
+                        // Apply periodic boundary condition
+                        // PBC
+                        if (dr12.x > box_2[0]) dr12.x -= conf->box[0];
+                        else if (dr12.x <= -box_2[0]) dr12.x += conf->box[0];
+                        if (dr12.y > box_2[1]) dr12.y -= conf->box[1];
+                        else if (dr12.y <= -box_2[1]) dr12.y += conf->box[1];
+                        if (dr12.z > box_2[2]) dr12.z -= conf->box[2];
+                        else if (dr12.z <= -box_2[2]) dr12.z += conf->box[2];
+
+                        // PBC
+                        if (dr13.x > box_2[0]) dr13.x -= conf->box[0];
+                        else if (dr13.x <= -box_2[0]) dr13.x += conf->box[0];
+                        if (dr13.y > box_2[1]) dr13.y -= conf->box[1];
+                        else if (dr13.y <= -box_2[1]) dr13.y += conf->box[1];
+                        if (dr13.z > box_2[2]) dr13.z -= conf->box[2];
+                        else if (dr13.z <= -box_2[2]) dr13.z += conf->box[2];
+
+                        // PBC
+                        if (dr23.x > box_2[0]) dr23.x -= conf->box[0];
+                        else if (dr23.x <= -box_2[0]) dr23.x += conf->box[0];
+                        if (dr23.y > box_2[1]) dr23.y -= conf->box[1];
+                        else if (dr23.y <= -box_2[1]) dr23.y += conf->box[1];
+                        if (dr23.z > box_2[2]) dr23.z -= conf->box[2];
+                        else if (dr23.z <= -box_2[2]) dr23.z += conf->box[2];
+
+                        double dist12 = dr12.length2();
+                        double dist13 = dr13.length2();
+                        double dist23 = dr23.length2();
+
+                        if(dist13 > cut2) continue;   
+
+                        double r12 = sqrt(dist12);
+                        double r13 = sqrt(dist13);
+                        double r23 = sqrt(dist23);
+
+                        double r12_1 = 1.0/r12; 
+                        double r12_3 = r12_1*r12_1*r12_1;
+                        double r13_1 = 1.0/r13; 
+                        double r13_3 = r13_1*r13_1*r13_1;
+                        double r23_1 = 1.0/r23; 
+                        double r23_3 = r23_1*r23_1*r23_1;
+
+                        double cos_theta123 = (dr12*dr13)/(r12*r13);
+                        double cos_theta231 = -(dr23*dr12)/(r23*r12);
+                        double cos_theta312 = (dr13*dr23)/(r13*r23);
+                        #define PI 3.14159265
+                        cout << acos(cos_theta123)* 180.0 / PI << " " << acos(cos_theta231)* 180.0 / PI << " " << acos(cos_theta312)* 180.0 / PI << endl;
+                        double three_body_ene = (1 + 3 * cos_theta123 * cos_theta231 * cos_theta312)*r12_3*r13_3*r23_3;
+                        Emisc += three_body_ene;
+                    }
                 }  
             }     
         }       
