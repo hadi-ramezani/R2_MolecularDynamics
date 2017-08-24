@@ -41,7 +41,7 @@ void Integrator::loop(const Configure *conf, const Initial *init){
 
     bonded.compute(pos, f, Ebond, Eangle, Edihedral, Eimproper);
     nonbonded.build_cells(init, pos, f, conf);
-    nonbonded.build_neighborlist(init, pos, f, conf);
+    nonbonded.build_atomlist(init, pos, f, conf);
     nonbonded.compute(init, pos, f, Evdw, Eelec, conf);
     Etot = Ebond + Eangle + Edihedral + Eimproper + Evdw + Eelec + Ekin;
     cout << "Running the simulation..." << endl;
@@ -59,6 +59,8 @@ void Integrator::loop(const Configure *conf, const Initial *init){
         //Compute force at time t+dt
         memset((void *)f, 0, conf->numAtoms*sizeof(Vector));
         bonded.compute(pos, f, Ebond, Eangle, Edihedral, Eimproper);
+        nonbonded.build_cells(init, pos, f, conf);
+        nonbonded.build_atomlist(init, pos, f, conf);
         nonbonded.compute(init, pos, f, Evdw, Eelec, conf);
 
         Ekin = 0; 

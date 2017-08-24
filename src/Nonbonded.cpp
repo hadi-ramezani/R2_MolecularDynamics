@@ -3,6 +3,7 @@
 #include "Initial.h"
 #include "LJTable.h"
 #include <math.h>
+#define PI 3.14159265
 
 Nonbonded::Nonbonded(const Initial *init, 
                                    const Parameters *params,
@@ -20,6 +21,10 @@ Nonbonded::Nonbonded(const Initial *init,
     c3 = 4*c1;
     ljTable = new LJTable(params);
     
+    atoms = new NonbondedAtom[natoms];
+    memset((void *)atoms, 0, natoms*sizeof(NonbondedAtom));
+
+
     poshift = new Vector[natoms];
     memset((void *)poshift, 0, natoms*sizeof(Vector));
 }
@@ -100,7 +105,74 @@ void Nonbonded::build_cells(const Initial *init, const Vector *pos, Vector *f, c
     }
 }
 
-void Nonbonded::build_neighborlist(const Initial *init, const Vector *pos, Vector *f, const Configure *conf){
+void Nonbonded::build_mycells(const Initial *init, const Vector *pos, Vector *f, const Configure *conf) {
+
+    int  ncellxy, tcells;
+    double pairdist = conf->pairlistdist;
+
+    ncellx = int(conf->box[0]/pairdist) + 1;
+    ncelly = int(conf->box[1]/pairdist) + 1;
+    ncellz = int(conf->box[2]/pairdist) + 1;
+    ncellxy = ncelly * ncellx;
+    tcells = ncellxy * ncellz;
+    cells = new Cell[tcells];  // Allocate space for total number of cells
+    memset((void *)cells, 0, tcells*sizeof(Cell));
+
+        // Create list of neighbor for each box
+    int index, nbindex;
+    int xnb, ynb, znb;
+    int cellindex = 0;
+    for (int zi=0; zi<ncellz; zi++) {
+        for (int yi=0; yi<ncelly; yi++) {
+            for (int xi=0; xi<ncellx; xi++) {
+                int nbrs[27];
+                int nnb = 0;
+                index = zi * ncellxy + yi * ncellx + xi;
+                for (int xx=-1; xx<2; xx++){
+                    for (int yy=-1; yy<2; yy++){
+                        for (int zz=-1; zz<2; zz++){
+                            znb = zi + zz;
+                            if (znb < 0 ) znb = ncellz -1;
+                            else if (znb == ncellz) znb = 0;
+
+                            ynb = yi + yy;
+                            if (ynb < 0 ) ynb = ncelly -1;
+                            else if (ynb == ncelly) ynb = 0;
+
+                            xnb = xi + xx;
+                            if (xnb < 0 ) xnb = ncellx -1;
+                            else if (xnb == ncellx) xnb = 0;
+
+                            nbindex = znb * ncellxy + ynb * ncellx + xnb;
+                            nbrs[nnb++] = nbindex;
+
+                        }
+                    }
+                }
+            // Copy 14 elemnets of nbrs to cells and delete double elements
+            for (int jj=0; jj<14; jj++){ cells[cellindex].nbrlist[jj] = -1; }
+            cells[cellindex].num = 0;
+            int jj=0;
+            bool flag = true;
+            for (int ii=0; ii<27; ii++){
+                while (cells[cellindex].nbrlist[jj] != -1 && jj<14){
+                    if (nbrs[ii] == cells[cellindex].nbrlist[jj]) flag = false;
+                    jj++;
+                }
+                if (flag) {
+                    cells[cellindex].nbrlist[cells[cellindex].num++] = nbrs[ii];
+                }
+                jj=0;
+                flag = true;
+                if (cells[cellindex].num == 14 || cells[cellindex].nbrlist[cells[cellindex].num - 1] == cellindex) break;
+            }
+            cellindex++;
+            }
+        }
+    }
+}
+
+void Nonbonded::build_atomlist(const Initial *init, const Vector *pos, Vector *f, const Configure *conf){
     
     int aindex;
     
@@ -153,6 +225,106 @@ void Nonbonded::build_neighborlist(const Initial *init, const Vector *pos, Vecto
         numinbox[aindex]++;
     } 
     delete [] maxinbox;
+}
+
+void Nonbonded::build_neighborlist(const Initial *init, const Vector *pos, Vector *f, const Configure *conf){
+    
+    double box_2[3];
+    box_2[0] = conf->box[0]*0.5; box_2[1] = conf->box[1]*0.5; box_2[2] = conf->box[2]*0.5;
+
+    // shift atom coordinates inside the box (i.e. wrap them) for nonbonded calculations
+    // Currently we assume the origin is at (0, 0, 0)
+    // I'll change this in the future if needed
+    for (int i=0; i<natoms; i++){ // For a box with the origin at the lower left vertex
+        poshift[i].x = pos[i].x - floor(pos[i].x/conf->box[0]) * conf->box[0];
+        poshift[i].y = pos[i].y - floor(pos[i].y/conf->box[1]) * conf->box[1];
+        poshift[i].z = pos[i].z - floor(pos[i].z/conf->box[2]) * conf->box[2];
+    }
+
+    // add small number to make sure all particles are located in the cells
+    // avoid the problem for particles located on the border
+    double pairdistx = conf->box[0]/ncellx + 0.001; 
+    double pairdisty = conf->box[1]/ncelly + 0.001; 
+    double pairdistz = conf->box[2]/ncellz + 0.001;
+
+    int ncellxy = ncelly * ncellx;
+    int tcell   = ncellxy * ncellz;
+
+    for (int ii=0; ii<tcell; ii++) cells[ii].atoms.clear(); // Clear memory to save atoms again
+    int cellx, celly, cellz, index;
+
+    for (int ii=0; ii<natoms; ii++){
+        const Vector *loc = poshift + ii;
+        cellx = int(loc->x/pairdistx);
+        celly = int(loc->y/pairdisty);
+        cellz = int(loc->z/pairdistz);
+        index = cellz * ncellxy + celly * ncellx + cellx;
+        cells[index].atoms.push_back(ii);
+    }
+
+    for (int iatom=0; iatom<natoms; iatom++) {
+        atoms[iatom].nbrlist1.clear(); // Clear the neighbor list
+        atoms[iatom].nbrlist2.clear();
+    }
+
+    for (int icell=0; icell<tcell; icell++) {
+        for (int ii=0; ii<cells[icell].atoms.size(); ii++) {
+            int iatom = cells[icell].atoms[ii];
+            for (int jj=ii+1; jj<cells[icell].atoms.size(); jj++){ // Atoms i and j are both in one cell
+                int jatom = cells[icell].atoms[jj];
+                Vector dij = poshift[iatom] - poshift[jatom];
+                // PBC
+                if (dij.x>box_2[0]) dij.x -= conf->box[0];
+                else if (dij.x<=-box_2[0]) dij.x += conf->box[0];
+                if (dij.y>box_2[1]) dij.y -= conf->box[1];
+                else if (dij.y<=-box_2[1]) dij.y += conf->box[1];
+                if (dij.z>box_2[2]) dij.z -= conf->box[2];
+                else if (dij.z<=-box_2[2]) dij.z += conf->box[2];
+                double dist2 = dij.length2();
+
+                if (dist2 < pair2){
+                    if (!init->checkexcl(iatom, jatom)){
+                        if (dist2 > cut2) {
+                            atoms[iatom].nbrlist1.push_back(jatom);
+                        } else {
+                            atoms[iatom].nbrlist2.push_back(jatom);
+                        }
+                    }
+                }
+            }
+            // Atom i is in the cell icell and atom j is in the cell jcell
+            for (int nn=0; nn<cells[icell].num-1; nn++){ // Search nearest neighbors; Maximum 13 neighbors;
+                int jcell=cells[icell].nbrlist[nn];
+                for (int jj=0; jj<cells[jcell].atoms.size(); jj++) { // Loop over all atoms in the jcell
+                    int jatom = cells[jcell].atoms[jj];
+                    Vector dij = poshift[iatom] - poshift[jatom];
+                    // PBC
+                    if (dij.x>box_2[0]) dij.x -= conf->box[0];
+                    else if (dij.x<=-box_2[0]) dij.x += conf->box[0];
+                    if (dij.y>box_2[1]) dij.y -= conf->box[1];
+                    else if (dij.y<=-box_2[1]) dij.y += conf->box[1];
+                    if (dij.z>box_2[2]) dij.z -= conf->box[2];
+                    else if (dij.z<=-box_2[2]) dij.z += conf->box[2];
+                    double dist2 = dij.length2();
+
+                    if (dist2 < pair2){
+                        if (!init->checkexcl(iatom, jatom)){
+                            if (dist2 > cut2) {
+                                atoms[iatom].nbrlist1.push_back(jatom);
+                            } else {
+                                atoms[iatom].nbrlist2.push_back(jatom);
+                            }
+                        }
+                    }
+                }
+            }
+
+            atoms[iatom].nbrlist1.shrink_to_fit(); atoms[iatom].nbrlist1.reserve(atoms[iatom].nbrlist1.size()+10);
+            atoms[iatom].nbrlist2.shrink_to_fit(); atoms[iatom].nbrlist2.reserve(atoms[iatom].nbrlist2.size()+10);
+
+        }
+    }
+
 }
 
 void Nonbonded::compute(const Initial *init, const Vector *pos,
@@ -233,7 +405,7 @@ void Nonbonded::compute(const Initial *init, const Vector *pos,
                         tmpf -= force_r * dr; 
                         nbrbox[j].force += force_r * dr;
 
-                    } // exclusion check 
+                    }
                 }  
                 tmpbox[i].force += tmpf; 
             }     
@@ -247,6 +419,126 @@ void Nonbonded::compute(const Initial *init, const Vector *pos,
         for (int j=0; j<numinbox[i]; j++) {
         f[boxatom[i][j].ind] = boxatom[i][j].force;
         }
+    }
+}
+
+void Nonbonded::mycompute(const Initial *init, const Vector *pos,
+                               Vector *f, double& Evdw, double& Eelec, const Configure *conf) {
+
+    
+    double box_2[3];
+    box_2[0] = conf->box[0]*0.5; box_2[1] = conf->box[1]*0.5; box_2[2] = conf->box[2]*0.5;
+    Vector loci;
+
+    Evdw = Eelec = 0;
+    // loop over all atoms
+    for (int iatom=0; iatom<natoms; iatom++){
+
+        // get the vdwtype and charge of the atom i
+        Index vdwtype1 = init->atomvdwtype(iatom);
+        double kq = COULOMB * init->atomcharge(iatom);
+        //get the coordinate of the atom 
+        loci = pos[iatom];
+        
+        // get number of neighbors between the cutoff and pairlistdist
+        int nnbr1 = atoms[iatom].nbrlist1.size();
+        int i = 0;
+        for (int jatom : atoms[iatom].nbrlist1) {
+            // get the vector connecting i to j
+            Vector dij = loci - pos[jatom];
+            //PBC
+            if (dij.x > box_2[0]) dij.x -= conf->box[0];
+            else if (dij.x<=-box_2[0]) dij.x += conf->box[0];
+            if (dij.y > box_2[1]) dij.y -= conf->box[1];
+            else if (dij.y <= -box_2[1]) dij.y += conf->box[1];
+            if (dij.z > box_2[2]) dij.z -= conf->box[2];
+            else if (dij.z <= -box_2[2]) dij.z += conf->box[2];
+
+            // get the squared distance
+            double dr2 = dij.length2();
+
+            // check if the j atom moved to the cutoff distance
+            if (dr2 < cut2) {
+                // if so add the atom to the inner neighborlist
+                int pushf = atoms[iatom].nbrlist1[jatom];
+                atoms[iatom].nbrlist2.push_back(pushf);
+                //now erase that atom from the outer list
+                // check this
+                atoms[iatom].nbrlist1.erase(atoms[iatom].nbrlist1.begin()+i);
+            }
+            // check if the atom moved out of the outer cutoff
+            else if (dr2 > pair2) {
+                // if so remove it from the outer list
+                atoms[iatom].nbrlist1.erase(atoms[iatom].nbrlist1.begin()+i);
+            }
+            i++;
+        }
+            
+        // resize the vector
+        atoms[iatom].nbrlist2.shrink_to_fit(); atoms[iatom].nbrlist2.reserve(atoms[iatom].nbrlist2.size()+10);
+        // get the number of neighbors within the cutoff 
+        int nnbr2 = atoms[iatom].nbrlist2.size();
+        // a vector to hold forces on atom i from the neighbors
+        register Vector tmpf;
+        // loop over all atoms within the cutoff
+        for (int jatom : atoms[iatom].nbrlist2) {
+            
+            // get the vector connecting atom i and j
+            Vector dij = loci - pos[jatom];
+            //PBC
+            if (dij.x > box_2[0]) dij.x -= conf->box[0];
+            else if (dij.x <= -box_2[0]) dij.x += conf->box[0];
+            if (dij.y > box_2[1]) dij.y -= conf->box[1];
+            else if (dij.y <= -box_2[1]) dij.y += conf->box[1];
+            if (dij.z > box_2[2]) dij.z -= conf->box[2];
+            else if (dij.z <= -box_2[2]) dij.z += conf->box[2];
+
+            // get the squared distance between atom i and j
+            double dr2 = dij.length2();
+            // if the distance if larger than cutoff skip atom j elae continue
+            if(dr2 > cut2) continue;
+
+            // comoute the energy and apply the switch
+            double r = sqrt(dr2);
+            double r_1 = 1.0/r; 
+            double r_2 = r_1*r_1;
+            double r_6 = r_2*r_2*r_2;
+            double r_12 = r_6*r_6;
+            double switchVal = 1, dSwitchVal = 0;
+            if (dr2 > switch2) {
+                // applying the switch 
+                // see http://localscf.com/localscf.com/LJPotential.aspx.html for details
+                double c2 = cut2 - dr2;
+                double c4 = c2*(cut2 + 2*dr2 - 3.0*switch2);
+                switchVal = c2*c4*c1;
+                dSwitchVal = c3*r*(c2*c2-c4);
+            }
+
+            // get VDW constants
+            Index vdwtype2 = init->atomvdwtype(jatom);
+            const LJTableEntry *entry;
+            if (init->check14excl(iatom,jatom))
+                entry = ljTable->table_val_scaled14(vdwtype1, vdwtype2); 
+            else
+                entry = ljTable->table_val(vdwtype1, vdwtype2);
+
+            double vdwA = entry->A;
+            double vdwB = entry->B;
+            double AmBterm = (vdwA * r_6 - vdwB)*r_6;
+            Evdw += switchVal*AmBterm;
+            double lj_force = ( switchVal * 6.0 * (vdwA*r_12 + AmBterm) *
+            r_1 - AmBterm*dSwitchVal )*r_1;
+             
+            // Electrostatics
+            double kqq = kq * init->atomcharge(jatom);
+            double efac = 1.0 - dr2/cut2;
+            double prefac = kqq * r_1 * efac;
+            Eelec += prefac * efac;
+            double elec_force = prefac * r_1 * (r_1 + 3.0*r/cut2);
+            f[jatom] -= (lj_force + elec_force) * dij;
+            tmpf -= f[jatom]; 
+        }
+        f[iatom] += tmpf;
     }
 }
 
@@ -275,7 +567,7 @@ void Nonbonded::compute_threebody(const Initial *init, const Vector *pos,
 
                 int num = numinbox[*nbr];
                 for (int j=startj; j<num; j++) {
-                    
+
                     int startk = 0;
                     if (aindex == *nbr) startk = startj+1;
 
@@ -341,14 +633,228 @@ void Nonbonded::compute_threebody(const Initial *init, const Vector *pos,
     }       
 }
 
+void Nonbonded::compute_mythreebody(const Initial *init, const Vector *pos,
+                               Vector *f, double& Emisc, const Configure *conf) {
+
+
+    double box_2[3];
+    box_2[0] = conf->box[0]*0.5; box_2[1] = conf->box[1]*0.5; box_2[2] = conf->box[2]*0.5;
+    Vector loci;
+
+    Emisc = 0;
+    // loop over all atoms
+    for (int iatom=0; iatom<natoms; iatom++){
+
+        //get the coordinate of the atom 
+        loci = pos[iatom];
+        
+        // get number of neighbors between the cutoff and pairlistdist
+        int nnbr1 = atoms[iatom].nbrlist1.size();
+        int i = 0;
+        for (int jatom : atoms[iatom].nbrlist1) {
+            // get the vector connecting i to j
+            Vector dij = loci - pos[jatom];
+            //PBC
+            if (dij.x > box_2[0]) dij.x -= conf->box[0];
+            else if (dij.x<=-box_2[0]) dij.x += conf->box[0];
+            if (dij.y > box_2[1]) dij.y -= conf->box[1];
+            else if (dij.y <= -box_2[1]) dij.y += conf->box[1];
+            if (dij.z > box_2[2]) dij.z -= conf->box[2];
+            else if (dij.z <= -box_2[2]) dij.z += conf->box[2];
+
+            // get the squared distance
+            double dr2 = dij.length2();
+
+            // check if the j atom moved to the cutoff distance
+            if (dr2 < cut2) {
+                // if so add the atom to the inner neighborlist
+                int pushf = atoms[iatom].nbrlist1[jatom];
+                atoms[iatom].nbrlist2.push_back(pushf);
+                //now erase that atom from the outer list
+                // check this
+                atoms[iatom].nbrlist1.erase(atoms[iatom].nbrlist1.begin()+i);
+            }
+            // check if the atom moved out of the outer cutoff
+            else if (dr2 > pair2) {
+                // if so remove it from the outer list
+                atoms[iatom].nbrlist1.erase(atoms[iatom].nbrlist1.begin()+i);
+            }
+            i++;
+        }
+            
+        // resize the vector
+        atoms[iatom].nbrlist2.shrink_to_fit(); atoms[iatom].nbrlist2.reserve(atoms[iatom].nbrlist2.size()+10);
+        // get the number of neighbors within the cutoff 
+        int nnbr2 = atoms[iatom].nbrlist2.size();
+
+        // loop over all atoms within the cutoff
+        for (int j = 0; j < atoms[iatom].nbrlist2.size(); j++) {
+            
+            int jatom = atoms[iatom].nbrlist2[j];
+
+            for (int k = j+1; k < atoms[iatom].nbrlist2.size(); k++) {
+
+                int katom = atoms[iatom].nbrlist2[k];
+                // get the vector connecting atom i and j
+                Vector dij = loci - pos[jatom];
+                Vector dik = loci - pos[katom];
+                Vector djk = pos[jatom] - pos[katom];
+
+                //PBC            
+                if (dij.x > box_2[0]) dij.x -= conf->box[0];
+                else if (dij.x <= -box_2[0]) dij.x += conf->box[0];
+                if (dij.y > box_2[1]) dij.y -= conf->box[1];
+                else if (dij.y <= -box_2[1]) dij.y += conf->box[1];
+                if (dij.z > box_2[2]) dij.z -= conf->box[2];
+                else if (dij.z <= -box_2[2]) dij.z += conf->box[2];
+
+                if (dik.x > box_2[0]) dik.x -= conf->box[0];
+                else if (dik.x <= -box_2[0]) dik.x += conf->box[0];
+                if (dik.y > box_2[1]) dik.y -= conf->box[1];
+                else if (dik.y <= -box_2[1]) dik.y += conf->box[1];
+                if (dik.z > box_2[2]) dik.z -= conf->box[2];
+                else if (dik.z <= -box_2[2]) dik.z += conf->box[2];
+
+                if (djk.x > box_2[0]) djk.x -= conf->box[0];
+                else if (djk.x <= -box_2[0]) djk.x += conf->box[0];
+                if (djk.y > box_2[1]) djk.y -= conf->box[1];
+                else if (djk.y <= -box_2[1]) djk.y += conf->box[1];
+                if (djk.z > box_2[2]) djk.z -= conf->box[2];
+                else if (djk.z <= -box_2[2]) djk.z += conf->box[2];
+
+                // get the squared distance between atom i and j
+                double distij = dij.length2();
+                double distik = dik.length2();
+                double distjk = djk.length2();
+
+                // if the distance if larger than cutoff skip
+                if(distij > cut2 || distik > cut2 || distjk > cut2) continue;   
+
+                double rij = sqrt(distij);
+                double rik = sqrt(distik);
+                double rjk = sqrt(distjk);
+
+                double rij_1 = 1.0/rij; 
+                double rij_3 = rij_1*rij_1*rij_1;
+                double rik_1 = 1.0/rik; 
+                double rik_3 = rik_1*rik_1*rik_1;
+                double rjk_1 = 1.0/rjk; 
+                double rjk_3 = rjk_1*rjk_1*rjk_1;
+
+                double cos_thetaijk = (dij*dik)/(rij*rik);
+                double cos_thetajki = -(djk*dij)/(rjk*rij);
+                double cos_thetakij = (dik*djk)/(rik*rjk);
+
+                double thetaijk = acos(cos_thetaijk)* 180.0 / PI;
+                double thetajki = acos(cos_thetajki)* 180.0 / PI;
+                double thetakij = acos(cos_thetakij)* 180.0 / PI;
+                cout << thetaijk << " " << thetajki << " " << thetakij << endl;
+                double three_body_ene = (1 + 3 * cos_thetaijk * cos_thetajki * cos_thetakij)*rij_3*rik_3*rjk_3;
+                Emisc += three_body_ene;
+            }
+        }
+    }
+
+    
+/*    double box_2[3];
+    box_2[0] = conf->box[0]*0.5; box_2[1] = conf->box[1]*0.5; box_2[2] = conf->box[2]*0.5;
+
+    // Loop over cells, and compute the interactions between each cell and
+    // its neighbors.
+
+    Emisc = 0;
+    for (int aindex = 0; aindex<totb; aindex++) {  
+        atominfo *tmpbox = boxatom[aindex];
+        int *tmpnbr = nbrlist[aindex];
+        for (int *nbr = tmpnbr; *nbr != -1; nbr++) {  
+            atominfo *nbrbox = boxatom[*nbr];
+            for (int i=0; i<numinbox[aindex]; i++) {  
+                register Vector tmppos = tmpbox[i].pos;
+                int ind1 = tmpbox[i].ind;
+                //Index vdwtype1 = init->atomvdwtype(ind1);
+                int startj = 0;
+                if (aindex == *nbr) startj = i+1;
+
+                int num = numinbox[*nbr];
+                for (int j=startj; j<num; j++) {
+
+                    int startk = 0;
+                    if (aindex == *nbr) startk = startj+1;
+
+                    for (int k = startk; k < num; k++) {   
+
+                        Vector dr12 = nbrbox[j].pos - tmppos;
+                        Vector dr13 = nbrbox[k].pos - tmppos;
+                        Vector dr23 = nbrbox[k].pos - nbrbox[j].pos;
+
+                        // Apply periodic boundary condition
+                        // PBC
+                        if (dr12.x > box_2[0]) dr12.x -= conf->box[0];
+                        else if (dr12.x <= -box_2[0]) dr12.x += conf->box[0];
+                        if (dr12.y > box_2[1]) dr12.y -= conf->box[1];
+                        else if (dr12.y <= -box_2[1]) dr12.y += conf->box[1];
+                        if (dr12.z > box_2[2]) dr12.z -= conf->box[2];
+                        else if (dr12.z <= -box_2[2]) dr12.z += conf->box[2];
+
+                        // PBC
+                        if (dr13.x > box_2[0]) dr13.x -= conf->box[0];
+                        else if (dr13.x <= -box_2[0]) dr13.x += conf->box[0];
+                        if (dr13.y > box_2[1]) dr13.y -= conf->box[1];
+                        else if (dr13.y <= -box_2[1]) dr13.y += conf->box[1];
+                        if (dr13.z > box_2[2]) dr13.z -= conf->box[2];
+                        else if (dr13.z <= -box_2[2]) dr13.z += conf->box[2];
+
+                        // PBC
+                        if (dr23.x > box_2[0]) dr23.x -= conf->box[0];
+                        else if (dr23.x <= -box_2[0]) dr23.x += conf->box[0];
+                        if (dr23.y > box_2[1]) dr23.y -= conf->box[1];
+                        else if (dr23.y <= -box_2[1]) dr23.y += conf->box[1];
+                        if (dr23.z > box_2[2]) dr23.z -= conf->box[2];
+                        else if (dr23.z <= -box_2[2]) dr23.z += conf->box[2];
+
+                        double dist12 = dr12.length2();
+                        double dist13 = dr13.length2();
+                        double dist23 = dr23.length2();
+
+                        if(dist13 > cut2) continue;   
+
+                        double r12 = sqrt(dist12);
+                        double r13 = sqrt(dist13);
+                        double r23 = sqrt(dist23);
+
+                        double r12_1 = 1.0/r12; 
+                        double r12_3 = r12_1*r12_1*r12_1;
+                        double r13_1 = 1.0/r13; 
+                        double r13_3 = r13_1*r13_1*r13_1;
+                        double r23_1 = 1.0/r23; 
+                        double r23_3 = r23_1*r23_1*r23_1;
+
+                        double cos_theta123 = (dr12*dr13)/(r12*r13);
+                        double cos_theta231 = -(dr23*dr12)/(r23*r12);
+                        double cos_theta312 = (dr13*dr23)/(r13*r23);
+                        #define PI 3.14159265
+                        cout << acos(cos_theta123)* 180.0 / PI << " " << acos(cos_theta231)* 180.0 / PI << " " << acos(cos_theta312)* 180.0 / PI << endl;
+                        double three_body_ene = (1 + 3 * cos_theta123 * cos_theta231 * cos_theta312)*r12_3*r13_3*r23_3;
+                        Emisc += three_body_ene;
+                    }
+                }  
+            }     
+        }       
+    }*/       
+}
+
 Nonbonded::~Nonbonded() {
     delete ljTable;
+    delete[] atoms;
+    delete[] poshift;
     // free up the storage space allocted for the grid search
-    for(int i=0; i < totb; i++) {
-        if (numinbox[i])  delete [] boxatom[i];
-        delete [] nbrlist[i];
+    if (totb > 0) {
+        for(int i=0; i < totb; i++) {
+            if (numinbox[i])  delete [] boxatom[i];
+            delete [] nbrlist[i];
+        }
+        delete [] nbrlist;
+        delete [] boxatom;
+        delete [] numinbox;
     }
-    delete [] nbrlist;
-    delete [] boxatom;
-    delete [] numinbox;
 }
