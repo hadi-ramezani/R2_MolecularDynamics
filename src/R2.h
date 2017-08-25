@@ -21,6 +21,8 @@ typedef unsigned short Index;
 
 typedef struct atom_name_info {
     char *resname;
+    int resnum;
+    char *segname;
     char *atomname;
     char *atomtype;
 } AtomNameInfo;

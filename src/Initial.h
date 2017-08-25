@@ -152,6 +152,21 @@ public:
         return(atoms[anum].mass);
     }
 
+    //  Get the residue name of an atom
+    char* get_resname(int anum) const {
+        return(atomNames[anum].resname);
+    }
+
+    //  Get the segment name of an atom
+    char* get_segname(int anum) const {
+        return(atomNames[anum].segname);
+    }
+
+    //  Get the resid from atom index
+    int get_resnum(int anum) const {
+        return(atomNames[anum].resnum);
+    }
+
     //  Get the charge of an atom
     double atomcharge(int anum) const {
         return(atoms[anum].charge);

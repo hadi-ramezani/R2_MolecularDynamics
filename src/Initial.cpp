@@ -374,7 +374,7 @@ void Initial::read_atoms(FILE *fd, Parameters *params) {
     int last_atom_number=0; // Last atom number, used to assure
             // atoms are in order
     char segment_name[11]; // Segment name
-    char residue_number[11]; // Residue number
+    int residue_number; // Residue number
     char residue_name[11];  // Residue name
     char atom_name[11];  // Atom name
     char atom_type[11];  // Atom type
@@ -401,8 +401,8 @@ void Initial::read_atoms(FILE *fd, Parameters *params) {
             continue;
 
         /*  Parse up the line          */
-        read_count=sscanf(buffer, "%d %s %s %s %s %s %lf %lf",
-            &atom_number, segment_name, residue_number,
+        read_count=sscanf(buffer, "%d %s %i %s %s %s %lf %lf",
+            &atom_number, segment_name, &residue_number,
             residue_name, atom_name, atom_type, &charge, &mass);
 
         /*  Check to make sure we found what we were expecting  */
@@ -429,10 +429,12 @@ void Initial::read_atoms(FILE *fd, Parameters *params) {
         /*  type, etc so that we only allocate as much space    */
         /*  for these strings as we really need      */
         int reslength = strlen(residue_name)+1;
+        int seglength = strlen(segment_name)+1;
         int namelength = strlen(atom_name)+1;
         int typelength = strlen(atom_type)+1;
 
         atomNames[atom_number-1].resname = new char[reslength];
+        atomNames[atom_number-1].segname = new char[seglength];
         atomNames[atom_number-1].atomname = new char[namelength];
         atomNames[atom_number-1].atomtype = new char[typelength];
   
@@ -441,8 +443,11 @@ void Initial::read_atoms(FILE *fd, Parameters *params) {
 
         /*  Put the values from this atom into the atoms array  */
         strcpy(atomNames[atom_number-1].resname, residue_name);
+        strcpy(atomNames[atom_number-1].segname, segment_name);
         strcpy(atomNames[atom_number-1].atomname, atom_name);
         strcpy(atomNames[atom_number-1].atomtype, atom_type);
+        atomNames[atom_number-1].resnum = residue_number;
+
         atoms[atom_number-1].mass = mass;
         atoms[atom_number-1].charge = charge;
         atoms[atom_number-1].status = UnknownAtom;

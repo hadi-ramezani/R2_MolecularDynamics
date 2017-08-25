@@ -662,7 +662,6 @@ void Nonbonded::compute_threebody(const Initial *init, const Vector *pos,
 
         //get the coordinate of the atom 
         loci = pos[iatom];
-        
         // get number of neighbors between the cutoff and pairlistdist
         int nnbr1 = atoms[iatom].nbrlist1.size();
         int i = 0;
@@ -712,48 +711,54 @@ void Nonbonded::compute_threebody(const Initial *init, const Vector *pos,
             apply_pbc(conf->box, box_2, dij);
 
             double distij = dij.length2();
-
             // look for k if i and j are bonded
             if (distij < threebody_ijcut2) {
                 for (int k = j+1; k < atoms[iatom].nbrlist2.size(); k++) {
-
+                    
                     int katom = atoms[iatom].nbrlist2[k];
-                    // get the vector connecting atom i, j, and k
-                    Vector dik = loci - pos[katom];
-                    Vector djk = pos[jatom] - pos[katom];
+                    // check if k and i are different chains
+                    int iatom_res = init->get_resnum(iatom);
+                    int katom_res = init->get_resnum(katom);
 
-                    // PBC
-                    apply_pbc(conf->box, box_2, dik);
-                    apply_pbc(conf->box, box_2, djk);
+                    if (iatom_res != katom_res) {
 
-                    // get the squared distance between atom i and j
-                    double distik = dik.length2();
-                    double distjk = djk.length2();
+                        // get the vector connecting atom i, j, and k
+                        Vector dik = loci - pos[katom];
+                        Vector djk = pos[jatom] - pos[katom];
 
-                    // if the distance if larger than cutoff skip
-                    if(distik > threebody_cut2 || distjk > threebody_cut2) continue;   
+                        // PBC
+                        apply_pbc(conf->box, box_2, dik);
+                        apply_pbc(conf->box, box_2, djk);
 
-                    double rij = sqrt(distij);
-                    double rik = sqrt(distik);
-                    double rjk = sqrt(distjk);
+                        // get the squared distance between atom i and j
+                        double distik = dik.length2();
+                        double distjk = djk.length2();
 
-                    double rij_1 = 1.0/rij; 
-                    double rij_3 = rij_1*rij_1*rij_1;
-                    double rik_1 = 1.0/rik; 
-                    double rik_3 = rik_1*rik_1*rik_1;
-                    double rjk_1 = 1.0/rjk; 
-                    double rjk_3 = rjk_1*rjk_1*rjk_1;
+                        // if the distance if larger than cutoff skip
+                        if(distik > threebody_cut2 || distjk > threebody_cut2) continue;   
 
-                    double cos_thetaijk = (dij*dik)/(rij*rik);
-                    double cos_thetajki = -(djk*dij)/(rjk*rij);
-                    double cos_thetakij = (dik*djk)/(rik*rjk);
+                        double rij = sqrt(distij);
+                        double rik = sqrt(distik);
+                        double rjk = sqrt(distjk);
 
-                    double thetaijk = acos(cos_thetaijk)* 180.0 / PI;
-                    double thetajki = acos(cos_thetajki)* 180.0 / PI;
-                    double thetakij = acos(cos_thetakij)* 180.0 / PI;
-                    //cout << thetaijk << " " << thetajki << " " << thetakij << endl;
-                    double three_body_ene = (1 + 3 * cos_thetaijk * cos_thetajki * cos_thetakij)*rij_3*rik_3*rjk_3;
-                    Emisc += three_body_ene;
+                        double rij_1 = 1.0/rij; 
+                        double rij_3 = rij_1*rij_1*rij_1;
+                        double rik_1 = 1.0/rik; 
+                        double rik_3 = rik_1*rik_1*rik_1;
+                        double rjk_1 = 1.0/rjk; 
+                        double rjk_3 = rjk_1*rjk_1*rjk_1;
+
+                        double cos_thetaijk = (dij*dik)/(rij*rik);
+                        double cos_thetajki = -(djk*dij)/(rjk*rij);
+                        double cos_thetakij = (dik*djk)/(rik*rjk);
+
+                        double thetaijk = acos(cos_thetaijk)* 180.0 / PI;
+                        double thetajki = acos(cos_thetajki)* 180.0 / PI;
+                        double thetakij = acos(cos_thetakij)* 180.0 / PI;
+                        //cout << thetaijk << " " << thetajki << " " << thetakij << endl;
+                        double three_body_ene = (1 + 3 * cos_thetaijk * cos_thetajki * cos_thetakij)*rij_3*rik_3*rjk_3;
+                        Emisc += three_body_ene;
+                    }
                 }
             }
         }
