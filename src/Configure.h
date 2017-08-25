@@ -48,6 +48,9 @@ public:
     char analysis[3];
     char aMode[10] = "3body";
     char aDcdName[80] = {0};
+    double threebodyCutoff;
+    double threebodyIJCutoff;
+    double threebodyPairDist;
 
     Configure();
     Configure(char *input);

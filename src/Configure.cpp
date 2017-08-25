@@ -157,6 +157,19 @@ Configure::Configure(char *input) {
             char* pch = strtok(NULL, " ,:=");
             strcpy(aMode,pch);                 
         }
+        else if (word == "3bodyCutoff"){
+            char *pch = strtok (NULL, " ,:=");
+            threebodyCutoff = stof(pch);
+        }
+        else if (word == "3bodyIJCutoff"){
+            char *pch = strtok (NULL, " ,:=");
+            threebodyIJCutoff = stof(pch);
+        }
+        else if (word == "3bodyPairDist"){
+            char *pch = strtok (NULL, " ,:=");
+            threebodyPairDist = stof(pch);
+            cout << threebodyPairDist << endl;
+        }
     }
 }
     infile.close();

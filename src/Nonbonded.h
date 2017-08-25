@@ -58,13 +58,14 @@ public:
     //second algorithm
     void build_mycells(const Initial *init, const Vector *pos, Vector *f, const Configure *conf);
     void build_neighborlist(const Initial *init, const Vector *pos, Vector *f, const Configure *conf);
+    void threebody_neighborlist(const Initial *init, const Vector *pos, Vector *f, const Configure *conf);
     void mycompute(const Initial *init, const Vector *pos, 
                    Vector *f, double& Evdw, double &Eelec, const Configure *conf);
 
     void compute_threebody(const Initial *init, const Vector *pos, 
                    Vector *f, double& Emisc, const Configure *conf);
-    void compute_mythreebody(const Initial *init, const Vector *pos, 
-                   Vector *f, double& Emisc, const Configure *conf);
+
+    void apply_pbc(const double box[3], const double box_2[3], Vector &dij);
 
     Vector *poshift; // Keep the location of shifted atoms for nonbonded calculation
 
@@ -80,7 +81,7 @@ private:
     double c1, c3;
     LJTable *ljTable;
 
-    int xb, yb, zb, xytotb, totb;               // dimensions of decomposition
+    int xb, yb, zb, xytotb, totb=0;               // dimensions of decomposition
 
     atominfo* *boxatom;       // positions, forces, and indicies for each atom  
     int *numinbox, *maxinbox; // Number of atoms in each box
@@ -92,6 +93,10 @@ private:
     int ncellx, ncelly, ncellz;
     int *type;
     vector<int>::iterator it;
+    // three body parameters
+    double threebody_cut2;
+    double threebody_pair2;
+    double threebody_ijcut2;
 };
 
 #endif	/* NONBONDED_H */
