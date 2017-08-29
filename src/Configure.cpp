@@ -170,6 +170,10 @@ Configure::Configure(char *input) {
             threebodyPairDist = stof(pch);
             cout << threebodyPairDist << endl;
         }
+        else if (word == "aOutputFilename"){
+            char* pch = strtok(NULL, " ,:=");
+            strcpy(aOutputFilename,pch); 
+        }
     }
 }
     infile.close();

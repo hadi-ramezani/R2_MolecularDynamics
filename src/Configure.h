@@ -48,6 +48,7 @@ public:
     char analysis[3];
     char aMode[10] = "3body";
     char aDcdName[80] = {0};
+    char aOutputFilename[80];
     double threebodyCutoff;
     double threebodyIJCutoff;
     double threebodyPairDist;

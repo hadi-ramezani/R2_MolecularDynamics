@@ -7,7 +7,7 @@
 
 Nonbonded::Nonbonded(const Initial *init, 
                                    const Parameters *params,
-                                   const Configure *conf) {
+                                   const Configure *conf): output(conf) {
 
     natoms = init->numAtoms;
     cut2 = conf->cutoff;
@@ -705,6 +705,7 @@ void Nonbonded::compute_threebody(const Initial *init, const Vector *pos,
         for (int j = 0; j < atoms[iatom].nbrlist2.size(); j++) {
             
             int jatom = atoms[iatom].nbrlist2[j];
+            // get the vector connecting atom i and j
             Vector dij = loci - pos[jatom];
             
             //PBC
@@ -719,10 +720,9 @@ void Nonbonded::compute_threebody(const Initial *init, const Vector *pos,
                     // check if k and i are different chains
                     int iatom_res = init->get_resnum(iatom);
                     int katom_res = init->get_resnum(katom);
-
                     if (iatom_res != katom_res) {
 
-                        // get the vector connecting atom i, j, and k
+                        // get the vector connecting atom i,k and j, k
                         Vector dik = loci - pos[katom];
                         Vector djk = pos[jatom] - pos[katom];
 
@@ -758,6 +758,7 @@ void Nonbonded::compute_threebody(const Initial *init, const Vector *pos,
                         //cout << thetaijk << " " << thetajki << " " << thetakij << endl;
                         double three_body_ene = (1 + 3 * cos_thetaijk * cos_thetajki * cos_thetakij)*rij_3*rik_3*rjk_3;
                         Emisc += three_body_ene;
+                        output.print_threebody(rik, dik.x, dik.y, dik.z, three_body_ene);
                     }
                 }
             }

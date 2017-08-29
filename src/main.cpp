@@ -57,10 +57,6 @@ int main(int argc, char** argv) {
 
     Initial init(&conf, &params); // Prepare initial parameteres for run
 
-    // We don't need mol anymore and it would be optimized the code if we delete mol but I don't know how :(
-    //cout << "Number of Residue = " << init.nresidue << endl;
-
-
     Integrator run(&conf,&init, &pdb, &params); // Main class for MD code
 
     if (strncasecmp(conf.analysis, "on", 2) == 0){

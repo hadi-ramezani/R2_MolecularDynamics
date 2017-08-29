@@ -5,6 +5,9 @@
 
 Output::Output(const char *filename, const Configure* conf) {
     outf.open(filename);
+    if (!outf){
+        R2_die("Couln't open the file to write energies!!!");
+    }
     if ((strncasecmp(conf->analysis, "on", 2) == 0)){
         
         outf << setw(width) << right << "#Frame"
@@ -16,8 +19,8 @@ Output::Output(const char *filename, const Configure* conf) {
             << setw(width) << right << "Eelec"
             << setw(width) << right << "Emisc"
             << setw(width) << right << "Etotal" << endl;
-
-    } else {
+    } 
+    else {
         outf << setw(width) << right << "#Step" 
             << setw(width) << right << "Time" 
             << setw(width) << right << "Ebond"
@@ -30,6 +33,18 @@ Output::Output(const char *filename, const Configure* conf) {
             << setw(width) << right << "Etotal"
             << setw(width) << right << "Temp" << endl;
     }
+}
+
+Output::Output(const Configure* conf){
+
+    if (strncasecmp(conf->aMode, "3body", 4) == 0) {
+        outf_threebody.open(conf->aOutputFilename);
+        outf_threebody << setw(width) << right << "#rik"
+            << setw(width) << right << "xik"
+            << setw(width) << right << "yik"
+            << setw(width) << right << "zik"
+            << setw(width) << right << "energy" << endl;
+        }
 }
 
 // Normal simulation
@@ -62,6 +77,19 @@ void Output::print(const unsigned int frameNum, const double Ebond, const double
         << setw(width) << right << Eelec
         << setw(width) << right << Emisc
         << setw(width) << right << Etot << endl;    
+}
+
+void Output::print_threebody(const double rik, const double xik, const double yik, const double zik,
+        const double energy){
+
+    if (!outf_threebody) {
+        R2_die("Couln't open the file to write three-body energies!!!");;
+    }
+    outf_threebody << setw(width) << right << rik
+        << setw(width) << right << xik 
+        << setw(width) << right << yik 
+        << setw(width) << right << zik
+        << setw(width) << right << energy << endl;    
 }
 
 void Output::wrap(const Initial *init, const double *box, Vector *const pos){
@@ -116,10 +144,11 @@ void Output::wrap(const Initial *init, const double *box, Vector *const pos){
     }*/
 }
 
-Output::Output(const Output& orig) {
+Output::Output() {
 }
 
 Output::~Output() {
     outf.close();
+    //outf_threebody.close();
 }
 

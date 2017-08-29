@@ -4,6 +4,7 @@
 #include "Configure.h"
 #include "Vector.h"
 #include <vector>
+#include "Output.h"
 
 class Initial;
 class Parameters;
@@ -47,6 +48,8 @@ struct Pair {
 
 class Nonbonded {
 public:
+    Output output;
+
     Nonbonded(const Initial *, const Parameters *, const Configure *);
     ~Nonbonded();
 
