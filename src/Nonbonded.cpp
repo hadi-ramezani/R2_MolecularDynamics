@@ -717,7 +717,7 @@ void Nonbonded::compute_threebody(const Initial *init, const Vector *pos,
                 for (int k = j+1; k < atoms[iatom].nbrlist2.size(); k++) {
                     
                     int katom = atoms[iatom].nbrlist2[k];
-                    // check if k and i are different chains
+                    // check if k and i are in different chains
                     int iatom_res = init->get_resnum(iatom);
                     int katom_res = init->get_resnum(katom);
                     if (iatom_res != katom_res) {
@@ -748,9 +748,9 @@ void Nonbonded::compute_threebody(const Initial *init, const Vector *pos,
                         double rjk_1 = 1.0/rjk; 
                         double rjk_3 = rjk_1*rjk_1*rjk_1;
 
-                        double cos_thetaijk = (dij*dik)/(rij*rik);
-                        double cos_thetajki = -(djk*dij)/(rjk*rij);
-                        double cos_thetakij = (dik*djk)/(rik*rjk);
+                        double cos_thetaijk = -(djk*dij)/(rjk*rij);
+                        double cos_thetajki = (dik*djk)/(rik*rjk);
+                        double cos_thetakij = (dij*dik)/(rij*rik);
 
                         double thetaijk = acos(cos_thetaijk)* 180.0 / PI;
                         double thetajki = acos(cos_thetajki)* 180.0 / PI;
@@ -758,7 +758,7 @@ void Nonbonded::compute_threebody(const Initial *init, const Vector *pos,
                         //cout << thetaijk << " " << thetajki << " " << thetakij << endl;
                         double three_body_ene = (1 + 3 * cos_thetaijk * cos_thetajki * cos_thetakij)*rij_3*rik_3*rjk_3;
                         Emisc += three_body_ene;
-                        output.print_threebody(rik, dik.x, dik.y, dik.z, three_body_ene);
+                        //output.print_threebody(rik, dik.x, dik.y, dik.z, three_body_ene);
                     }
                 }
             }
