@@ -152,6 +152,11 @@ public:
         return(atoms[anum].mass);
     }
 
+    double hydrogen(int anum) const {
+        if (atommass(anum) < 2) return true;
+        return false;
+    }
+
     //  Get the residue name of an atom
     char* get_resname(int anum) const {
         return(atomNames[anum].resname);

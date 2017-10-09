@@ -659,7 +659,8 @@ void Nonbonded::compute_threebody(const Initial *init, const Vector *pos,
     Emisc = 0;
     // loop over all atoms
     for (int iatom=0; iatom<natoms; iatom++){
-
+        // ignore hdrogen
+        if (init->hydrogen(iatom)) continue;
         //get the coordinate of the atom 
         loci = pos[iatom];
         // get number of neighbors between the cutoff and pairlistdist
@@ -703,8 +704,10 @@ void Nonbonded::compute_threebody(const Initial *init, const Vector *pos,
 
         // loop over all atoms within the cutoff
         for (int j = 0; j < atoms[iatom].nbrlist2.size(); j++) {
-            
+
             int jatom = atoms[iatom].nbrlist2[j];
+            // ignore hdrogen
+            if (init->hydrogen(jatom)) continue;
             // get the vector connecting atom i and j
             Vector dij = loci - pos[jatom];
             
@@ -717,6 +720,8 @@ void Nonbonded::compute_threebody(const Initial *init, const Vector *pos,
                 for (int k = j+1; k < atoms[iatom].nbrlist2.size(); k++) {
                     
                     int katom = atoms[iatom].nbrlist2[k];
+                    // ignore hdrogen
+                    if (init->hydrogen(katom)) continue;
                     // check if k and i are in different chains
                     int iatom_res = init->get_resnum(iatom);
                     int katom_res = init->get_resnum(katom);
@@ -758,7 +763,7 @@ void Nonbonded::compute_threebody(const Initial *init, const Vector *pos,
                         //cout << thetaijk << " " << thetajki << " " << thetakij << endl;
                         double three_body_ene = (1 + 3 * cos_thetaijk * cos_thetajki * cos_thetakij)*rij_3*rik_3*rjk_3;
                         Emisc += three_body_ene;
-                        //output.print_threebody(rik, dik.x, dik.y, dik.z, three_body_ene);
+                        output.print_threebody(rik, dik.x, dik.y, dik.z, three_body_ene);
                     }
                 }
             }
