@@ -27,8 +27,8 @@ struct Cell {
 };
 
 struct NonbondedAtom {
-    vector<int> nbrlist1;
-    vector<int> nbrlist2;
+    vector<int> nbrlist;
+    //vector<int> nbrlist2;
 
     int numnb;
     int cell;
