@@ -79,7 +79,7 @@ void Output::print(const unsigned int frameNum, const double Ebond, const double
         << setw(width) << right << Etot << endl;    
 }
 
-void Output::print_threebody(const double rik, const double xik, const double yik, const double zik,
+void Output::print_threebody(const double rik, const double xik, const double yik, const double zik, const double thetakij,
         const double energy){
 
     if (!outf_threebody) {
@@ -89,6 +89,7 @@ void Output::print_threebody(const double rik, const double xik, const double yi
         << setw(width) << right << xik 
         << setw(width) << right << yik 
         << setw(width) << right << zik
+        << setw(width) << right << thetakij
         << setw(width) << right << energy << endl;    
 }
 

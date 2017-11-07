@@ -20,7 +20,7 @@ public:
     void print(const unsigned int frameNum, const double Ebond, 
         const double Eangle, const double Edihedral, const double Eimproper,
         const double Evdw, const double Eelec, const double Emisc, const double Etot);
-    void print_threebody(const double rik, const double xik, const double yik, const double zik,
+    void print_threebody(const double rik, const double xik, const double yik, const double zik, const double thetakij,
         const double energy);
     Output();
     virtual ~Output();

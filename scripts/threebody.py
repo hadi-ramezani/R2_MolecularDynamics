@@ -114,8 +114,8 @@ def evolve_2d_histogram(r_bins, z_bins, values, counter, rik, zik, energy):
     if rik > r_bins[0] and rik < r_bins[-1] and zik > z_bins[0] and zik < z_bins[-1]:
         r_bin = int((rik - r_bins[0])/(r_bins[1] - r_bins[0]))
         z_bin = int((zik - z_bins[0])/(z_bins[1] - z_bins[0]))
-        values[r_bin, z_bin] += energy
-        counter[r_bin, z_bin] += 1
+        values[z_bin, r_bin] += energy
+        counter[z_bin, r_bin] += 1
     return values, counter
 
 def write_isotropic_output(outputfilename, r_centers, r_values, r_counter):
@@ -126,9 +126,9 @@ def write_isotropic_output(outputfilename, r_centers, r_values, r_counter):
 def write_anisotropic_output(outputfilename, r_centers, z_centers, values, counter):
     with open(outputfilename, 'w') as outputfile:
         outputfile.write('#binCenter_r  binCenter_z  average_energy    counts\n')
-        for i, z in enumerate(z_centers):
-            for j, r in enumerate(r_centers):
-                outputfile.write("%5.3f %5.3f %5.8f %i\n" % (z, r, values[i, j], counter[i, j]))
+        for j, z in enumerate(z_centers):
+            for i, r in enumerate(r_centers):
+                outputfile.write("%5.3f %5.3f %5.8f %i\n" % (z, r, values[j, i], counter[j, i]))
 
 def plot_1d(centers, values, plotname):
     ax = plt.subplot()
@@ -200,11 +200,10 @@ def run_anisotropic(rl, rh, rstep, zl, zh, zstep, inputfilename, outputfilename)
     #rstep = 1; zstep = 1
     r_bins = np.arange(rl, rh + rstep, rstep)
     z_bins = np.arange(zl, zh + zstep, zstep)
-    values = np.zeros((len(r_bins)-1, len(z_bins)-1), dtype=float)
-    counter = np.zeros((len(r_bins)-1, len(z_bins)-1))
+    values = np.zeros((len(z_bins)-1, len(r_bins)-1), dtype=float)
+    counter = np.zeros((len(z_bins)-1, len(r_bins)-1))
     r_centers = (r_bins[:-1] + r_bins[1:])/2
     z_centers = (z_bins[:-1] + z_bins[1:])/2
-
 
     values, counter = build_anisotropic_histogram(inputfilename, r_bins, z_bins, values, counter)
     values = values / counter
@@ -222,6 +221,9 @@ if system_type == 'anisotropic':
     write_anisotropic_output(outputfilename, r_centers, z_centers, values, counter)
     plot_2d(r_centers, z_centers, values, '3body_2d.png')
     plot_projection(r_centers, z_centers, 5, values, '3body_2d_projection.png')
+
+    r_values, r_counter, r_centers = run_isotropic(rl, rh, rstep, inputfilename, outputfilename+'_iso')
+    plot_1d(r_centers, r_values, '3body_1d.png')
 
 time2 = time.time()
 calculation_time = time2-time1
