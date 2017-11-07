@@ -43,6 +43,7 @@ Output::Output(const Configure* conf){
             << setw(width) << right << "xik"
             << setw(width) << right << "yik"
             << setw(width) << right << "zik"
+            << setw(width) << right << "thetakij"
             << setw(width) << right << "energy" << endl;
         }
 }
