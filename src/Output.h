@@ -21,7 +21,7 @@ public:
         const double Eangle, const double Edihedral, const double Eimproper,
         const double Evdw, const double Eelec, const double Emisc, const double Etot);
     void print_threebody(const double rik, const double xik, const double yik, const double zik, const double thetakij,
-        const double energy);
+        const double thetazij, const double energy);
     Output();
     virtual ~Output();
 private:

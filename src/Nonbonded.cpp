@@ -428,7 +428,9 @@ void Nonbonded::compute_threebody(const Initial *init, const Vector *pos,
                         double thetakij = acos(cos_thetakij)* 180.0 / PI;
                         double three_body_ene = (1 + 3 * cos_thetaijk * cos_thetajki * cos_thetakij)*rij_3*rik_3*rjk_3;
                         Emisc += three_body_ene;
-                        output.print_threebody(rik, dik.x, dik.y, dik.z, thetakij, three_body_ene);
+                        // Compute cos_theta where theta is the angle between the vector ij and the z axis
+                        double thetazij = acos(fabs(dij.z/rij))* 180.0 / PI;
+                        output.print_threebody(rik, dik.x, dik.y, dik.z, thetakij, thetazij, three_body_ene);
                     }
                 }
             }

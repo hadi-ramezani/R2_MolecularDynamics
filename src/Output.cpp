@@ -44,6 +44,7 @@ Output::Output(const Configure* conf){
             << setw(width) << right << "yik"
             << setw(width) << right << "zik"
             << setw(width) << right << "thetakij"
+            << setw(width) << right << "thetazij"
             << setw(width) << right << "energy" << endl;
         }
 }
@@ -81,7 +82,7 @@ void Output::print(const unsigned int frameNum, const double Ebond, const double
 }
 
 void Output::print_threebody(const double rik, const double xik, const double yik, const double zik, const double thetakij,
-        const double energy){
+        const double thetazij, const double energy){
 
     if (!outf_threebody) {
         R2_die("Couln't open the file to write three-body energies!!!");;
@@ -91,6 +92,7 @@ void Output::print_threebody(const double rik, const double xik, const double yi
         << setw(width) << right << yik 
         << setw(width) << right << zik
         << setw(width) << right << thetakij
+        << setw(width) << right << thetazij 
         << setw(width) << right << energy << endl;    
 }
 
