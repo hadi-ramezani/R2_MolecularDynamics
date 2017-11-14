@@ -184,7 +184,7 @@ def write_thetaZ_output(outputfilename, centers, counter):
 def plot_1d(centers, values, plotname):
     ax = plt.subplot()
     plt.plot(centers, values, linewidth = 1.5)
-    plt.xlabel(r'$\mathrm{r_{ij}}$', fontsize = 18)
+    plt.xlabel(r'$\mathrm{d_{ij}}$', fontsize = 18)
     plt.ylabel(r'$\mathrm{Three-body\/energy}$', fontsize = 18)
     for axis in ['top','bottom','left','right']:
         ax.spines[axis].set_linewidth(1.5)
@@ -201,8 +201,8 @@ def plot_thetaZ(thetaZ_centers, thetaZ_counter, plotname):
     thetaZ_counter = thetaZ_counter / float(np.sum(thetaZ_counter))
 
     plt.plot(thetaZ_centers, thetaZ_counter, linewidth = 1.5)
-    plt.xlabel(r'$\mathrm{\theta_{zij}}$', fontsize = 18)
-    plt.ylabel(r'$\mathrm{P(\theta_{zij})}$', fontsize = 18)
+    plt.xlabel(r'$\mathrm{\theta_{zik}}$', fontsize = 18)
+    plt.ylabel(r'$\mathrm{P(\theta_{zik})}$', fontsize = 18)
     for axis in ['top','bottom','left','right']:
         ax.spines[axis].set_linewidth(1.5)
     plt.tick_params(which='both', width=2)
@@ -243,7 +243,7 @@ def plot_theta(r_centers, theta_centers, theta_counter, plotname):
     plt.colorbar()
     #CP = plt.contour(r_centers, theta_centers, theta_counter, 15, linewidths=2, colors='white', extend='neither')
     #plt.clabel(CP, inline=1, fmt='%1.6f', fontsize=14, colors='white')
-    plt.xlabel(r'$\mathrm{r_{ij}}$', fontsize = 18)
+    plt.xlabel(r'$\mathrm{d_{ij}}$', fontsize = 18)
     plt.ylabel(r'$\mathrm{\theta_{kij}}$', fontsize = 18)
 
     for axis in ['top','bottom','left','right']:
