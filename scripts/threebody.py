@@ -63,11 +63,11 @@ parser.add_argument("-thetaZl",
                     help="thetaZ low")
 parser.add_argument("-thetaZh",
                     action="store",nargs='?', type = float,
-                    required=False, dest="thetaZh", default= float(90),
+                    required=False, dest="thetaZh", default= float(1),
                     help="thetaZ high")
 parser.add_argument("-thetaZs",
                     action="store",nargs='?', type = float,
-                    required=False, dest="thetaZstep", default= float(5),
+                    required=False, dest="thetaZstep", default= float(0.05),
                     help="thetaZ step")
 
 args = parser.parse_args()
@@ -103,7 +103,7 @@ def build_isotropic_histogram(inputfilename, r_bins, r_values, r_counter, theta_
                 try:
                     rik = float(columns[0])
                     thetakij = float(columns[4])
-                    thetazij = float(columns[5])
+                    thetazij = cos(float(columns[5])*pi/180)
                     energy = float(columns[6])
                     r_values, r_counter, theta_counter, thetaZ_counter = evolve_1d_histogram(r_bins, r_values, rik, energy, r_counter,
                                                                              theta_bins, theta_counter, thetakij,
@@ -138,7 +138,7 @@ def build_anisotropic_histogram(inputfilename, r_bins, z_bins, values, counter):
     return values, counter
 
 def evolve_1d_histogram(bins, values, xvalue, yvalue, counter, theta_bins, theta_counter, thetakij, thetaZ_bins, thetaZ_counter, thetazij):
-    if (xvalue > bins[0] and xvalue < bins[-1]) and (thetakij > theta_bins[0] and thetakij < theta_bins[-1]) and (thetazij > thetaZ_bins[0] and thetazij < thetaZ_bins[-1]):
+    if (xvalue > bins[0] and xvalue < bins[-1]) and (thetakij > theta_bins[0] and thetakij < theta_bins[-1]) and (thetazij >= thetaZ_bins[0] and thetazij < thetaZ_bins[-1]):
         bin = int((xvalue - bins[0])/(bins[1] - bins[0]))
         values[bin] += yvalue
         counter[bin] += 1
@@ -199,10 +199,10 @@ def plot_1d(centers, values, plotname):
 def plot_thetaZ(thetaZ_centers, thetaZ_counter, plotname):
     ax = plt.subplot()
     thetaZ_counter = thetaZ_counter / float(np.sum(thetaZ_counter))
-
+    plt.ylim(0, 0.4)
     plt.plot(thetaZ_centers, thetaZ_counter, linewidth = 1.5)
-    plt.xlabel(r'$\mathrm{\theta_{zik}}$', fontsize = 18)
-    plt.ylabel(r'$\mathrm{P(\theta_{zik})}$', fontsize = 18)
+    plt.xlabel(r'$\mathrm{\cos\theta_{zik}}$', fontsize = 18)
+    plt.ylabel(r'$\mathrm{P(cos\theta_{zik})}$', fontsize = 18)
     for axis in ['top','bottom','left','right']:
         ax.spines[axis].set_linewidth(1.5)
     plt.tick_params(which='both', width=2)
