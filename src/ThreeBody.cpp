@@ -36,10 +36,10 @@ void ThreeBody::run(const Configure *conf, const Initial* init, const PDB *pdb) 
         cout << "Reading frame " << frameNum << endl;
 
         //Compute and print energies
-        //bonded.compute(pos, f, Ebond, Eangle, Edihedral, Eimproper);
+        bonded.compute(pos, f, Ebond, Eangle, Edihedral, Eimproper);
         nonbonded.build_mycells(init, pos, f, conf);
-        //nonbonded.build_neighborlist(init, pos, f, conf);
-        //nonbonded.mycompute(init, pos, f, Evdw, Eelec, conf);
+        nonbonded.build_neighborlist(init, pos, f, conf);
+        nonbonded.mycompute(init, pos, f, Evdw, Eelec, conf);
 
         nonbonded.threebody_neighborlist(init, pos, f, conf);
         nonbonded.compute_threebody(init, pos, f, Emisc, conf);
