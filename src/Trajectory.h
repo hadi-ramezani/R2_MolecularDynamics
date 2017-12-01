@@ -39,17 +39,20 @@ public:
     int reverse;
     int charmm;
     int first;
-    int with_unitcell;        
+    int with_unitcell; 
+    int dcdStep;       
+    long header_size, filesize, firstframesize, framesize, trajsize;
 
     double Etot = 0.0, Ebond = 0.0, Eangle = 0.0, Evdw = 0.0, Eelec = 0.0, Ekin = 0.0;
 
     void write_header(const char *filename, int natoms);
     void read_header(int natoms, int nsets, int istart, int nsavc,
      double delta, int namnf, int* freeind, float* fixedcoords, int reverse,
-     int* charmm);
-    void open_dcd_get_info(const char *filename, int natoms);
+     int* charmm, const Configure *conf);
+    void open_dcd_get_info(const char *filename, int natoms, const Configure *conf);
     void write_frame(int natoms, const Vector *coor, const double* box);
-    bool read_frame(int natoms, Vector *coor, double* box);
+    bool read_frame(int natoms, Vector *coor, double* box, const Configure *conf);
+    void skip_frames(const int dcdStep);
     Trajectory(const char *filename, int natoms, const Configure* conf);
     Trajectory(const Trajectory& orig);
     virtual ~Trajectory();

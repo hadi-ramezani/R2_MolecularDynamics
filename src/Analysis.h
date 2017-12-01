@@ -26,7 +26,7 @@ public:
     Vector* vel2;
     Vector* f;
     double* imass;
-    double aBox[3];
+    double aBox[6];
 
     double Etot = 0.0, Ebond = 0.0, Eangle = 0.0, Evdw = 0.0, Eelec = 0.0;
     double Edihedral = 0.0 , Eimproper = 0.0;

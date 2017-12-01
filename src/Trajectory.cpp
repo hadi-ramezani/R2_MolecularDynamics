@@ -14,12 +14,12 @@ Trajectory::Trajectory(const char *filename, int natoms, const Configure *conf) 
     if (!(strncasecmp(conf->analysis, "on", 2) == 0)){
         write_header(filename, natoms);        
     } else {
-        open_dcd_get_info(filename, natoms);
+        open_dcd_get_info(filename, natoms, conf);
         //read_header(filename, natoms);
     }
 }
 
-void Trajectory::open_dcd_get_info(const char *filename, int natoms) {
+void Trajectory::open_dcd_get_info(const char *filename, int natoms, const Configure *conf) {
     
     // Check if the file is open
     dcdf.open(filename, ios::in|ios::binary);
@@ -31,12 +31,11 @@ void Trajectory::open_dcd_get_info(const char *filename, int natoms) {
 
 
     read_header(natoms, nsets, istart, nsavc, delta, nfixed, freeind,
-        fixedcoords, reverse, &charmm);
+        fixedcoords, reverse, &charmm, conf);
 
-    long header_size, filesize, firstframesize, framesize, trajsize;
     int ndims = 3; float newnsets;
     firstframesize = (natoms+4) * ndims * sizeof(float);
-    framesize = (natoms-nfixed+4) * ndims * sizeof(float);
+    framesize = (natoms-nfixed) * ndims * sizeof(float) + 8 * sizeof(int) + 6 * sizeof(double);
 
     header_size = dcdf.tellg(); /* save current offset (end of header) */
     dcdf.seekg(0, dcdf.end);
@@ -60,7 +59,11 @@ void Trajectory::open_dcd_get_info(const char *filename, int natoms) {
                 << newnsets << "frames" << endl;
     }
 
-    nsets = newnsets; 
+    if (conf->dcdLast > newnsets || conf->dcdLast < 0){
+        nsets = newnsets;
+    } else {
+        nsets = conf->dcdLast;
+    }
     setsread = 0;
 
     first = 1;
@@ -69,10 +72,9 @@ void Trajectory::open_dcd_get_info(const char *filename, int natoms) {
     X = new float[natoms];
     Y = new float[natoms];
     Z = new float[natoms];
-    boxdcd = new double[6];
 
     if (!X || !Y || !Z) {
-        cout << "Unable to allocate space..." << endl;
+        cout << "Unable to allocate space to store coordinates..." << endl;
      if (X) delete[] X;
      if (Y) delete[] Y;
      if (Z) delete[] Z;
@@ -82,7 +84,7 @@ void Trajectory::open_dcd_get_info(const char *filename, int natoms) {
 
 void Trajectory::read_header(int natoms, int nsets, int istart, int nsavc,
      double delta, int namnf, int* freeind, float* fixedcoords, int reverse,
-     int* charmm) {
+     int* charmm, const Configure *conf) {
 
     unsigned int input_integer[2];  /* buffer space */
     int i, ret_val, rec_scale;
@@ -118,7 +120,7 @@ void Trajectory::read_header(int natoms, int nsets, int istart, int nsavc,
 
     if (*charmm & DCD_IS_CHARMM) {
         /* CHARMM and NAMD versions 2.1b1 and later */
-        cout << "dcdplugin) CHARMM format DCD file (also NAMD 2.1 and later)" << endl;;
+        cout << "CHARMM format DCD file (also NAMD 2.1 and later)" << endl;;
     }
 
     /* Store the number of sets of coordinates (nsets) */
@@ -150,19 +152,19 @@ void Trajectory::read_header(int natoms, int nsets, int istart, int nsavc,
         dcdf.read((char *) &NTITLE, sizeof(int));
 
         if (NTITLE < 0) {
-            cout << "dcdplugin) WARNING: Bogus NTITLE value..." << endl;
+            cout << "WARNING: Bogus NTITLE value..." << endl;
             exit(1);
         }
 
         if (NTITLE > 1000) {
-            cout << "dcdplugin) WARNING: Bogus NTITLE value..." << endl;
+            cout << "WARNING: Bogus NTITLE value..." << endl;
 
             if (NTITLE == 1095062083) {
-                cout << "dcdplugin) WARNING: Broken Vega ZZ 2.4.0 DCD file detected" << endl;
-                cout << "dcdplugin) Assuming 2 title lines, good luck..." << endl;
+                cout << "WARNING: Broken Vega ZZ 2.4.0 DCD file detected" << endl;
+                cout << "Assuming 2 title lines, good luck..." << endl;
                 NTITLE = 2;
             } else {
-                cout << "dcdplugin) Assuming zero title lines, good luck..." << endl;
+                cout << "Assuming zero title lines, good luck..." << endl;
                 NTITLE = 0;
             }
         }
@@ -203,66 +205,26 @@ void Trajectory::read_header(int natoms, int nsets, int istart, int nsavc,
         /* Read in index array size */
         dcdf.read((char *) input_integer, rec_scale*sizeof(int));
         dcdf.read((char *) freeind, natoms-namnf*sizeof(int));
-        input_integer[1]=0;
+        input_integer[1] = 0;
         dcdf.read((char *) input_integer, rec_scale*sizeof(int));
     }
-
 }
 
-/*void Trajectory::read_header(const char *filename, int natoms) {
+void Trajectory::skip_frames(const int dcdStep){
+    dcdf.seekg((dcdStep - 1) * framesize, dcdf.cur);
+}
+
+bool Trajectory::read_frame(int natoms, Vector* pos, double* aBox, const Configure *conf)  {
 
     int out;
-    char buff[80];
-    char title[200];
-
-
-    // read the dcd header
-    dcdf.read((char*) &out, sizeof (int));
-
-    strcpy(buff, "CORD");
-    dcdf.read(buff, 4);
-
-    dcdf.read((char*)&out, sizeof (int));
-    dcdf.read((char*)&out, sizeof (int));
-    dcdf.read((char*)&out, sizeof (int));
-
-    for (int ii=0; ii<6; ii++){
-        dcdf.read((char*)&out, sizeof (int));
-    }
-
-    float outf = 2.0;
-    dcdf.read((char*)&outf, sizeof (double));
-
-    for (int ii=0; ii<8; ii++){
-        dcdf.read((char*)&out, sizeof (int));
-    }
-
-    dcdf.read((char*)&out, sizeof (int));
-    dcdf.read((char*)&out, sizeof (int));
-    dcdf.read((char*)&out, sizeof (int));
-
-    dcdf.read((char*)&out, sizeof (int));
-    sprintf(title,"REMARKS FILENAME= out.dcd CREATED BY NAMD");
-    title[79]='\0';
-    dcdf.read(title, 80);
-    sprintf(title,"TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT");
-    dcdf.read(buff, 80);
-
-    dcdf.read((char*)&out, sizeof (int));
-
-    dcdf.read((char*)&out, sizeof (int));
-    dcdf.read((char*)&natoms, sizeof (int));
-    dcdf.read((char*)&out, sizeof (int));
-
-    X = new float[natoms];
-    Y = new float[natoms];
-    Z = new float[natoms];
     boxdcd = new double[6];
-}*/
-
-bool Trajectory::read_frame(int natoms, Vector* pos, double* aBox)  {
-
-    int out;
+    aBox[0] = aBox[1] = aBox[2] = 1.0;
+    aBox[3] = aBox[4] = aBox[5] = 90.0;
+    if (setsread == 0){
+        skip_frames(conf->dcdFirst);
+        setsread+=conf->dcdFirst;
+    }
+    if (setsread  >= nsets) return false;
 
     dcdf.read((char*)&out, sizeof (unsigned int));
 
@@ -289,6 +251,9 @@ bool Trajectory::read_frame(int natoms, Vector* pos, double* aBox)  {
         pos[ii].y = Y[ii]; //- floor(coor[ii].y/box[1])*box[1];
         pos[ii].z = Z[ii]; //- floor(coor[ii].z/box[2])*box[2];
     }
+
+    skip_frames(conf->dcdStep);
+    setsread += conf->dcdStep;
 
     if (!dcdf) {
         return false;
@@ -389,6 +354,57 @@ void Trajectory::write_frame(int natoms, const Vector *coor, const double *box) 
     dcdf.write ((char*)&out, sizeof (int));
 
 }
+
+/*void Trajectory::read_header(const char *filename, int natoms) {
+
+    int out;
+    char buff[80];
+    char title[200];
+
+
+    // read the dcd header
+    dcdf.read((char*) &out, sizeof (int));
+
+    strcpy(buff, "CORD");
+    dcdf.read(buff, 4);
+
+    dcdf.read((char*)&out, sizeof (int));
+    dcdf.read((char*)&out, sizeof (int));
+    dcdf.read((char*)&out, sizeof (int));
+
+    for (int ii=0; ii<6; ii++){
+        dcdf.read((char*)&out, sizeof (int));
+    }
+
+    float outf = 2.0;
+    dcdf.read((char*)&outf, sizeof (double));
+
+    for (int ii=0; ii<8; ii++){
+        dcdf.read((char*)&out, sizeof (int));
+    }
+
+    dcdf.read((char*)&out, sizeof (int));
+    dcdf.read((char*)&out, sizeof (int));
+    dcdf.read((char*)&out, sizeof (int));
+
+    dcdf.read((char*)&out, sizeof (int));
+    sprintf(title,"REMARKS FILENAME= out.dcd CREATED BY NAMD");
+    title[79]='\0';
+    dcdf.read(title, 80);
+    sprintf(title,"TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT");
+    dcdf.read(buff, 80);
+
+    dcdf.read((char*)&out, sizeof (int));
+
+    dcdf.read((char*)&out, sizeof (int));
+    dcdf.read((char*)&natoms, sizeof (int));
+    dcdf.read((char*)&out, sizeof (int));
+
+    X = new float[natoms];
+    Y = new float[natoms];
+    Z = new float[natoms];
+    boxdcd = new double[6];
+}*/
 
 Trajectory::Trajectory(const Trajectory& orig) {
 }

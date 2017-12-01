@@ -21,7 +21,7 @@ public:
     double gamma  = 0.0;
 
     double timestep;   // in fs
-    double box[3];
+    double box[6];
 
     double cutoff;
     double switchdist;
@@ -52,6 +52,9 @@ public:
     double threebodyCutoff;
     double threebodyIJCutoff;
     double threebodyPairDist;
+    int dcdFirst = 0;
+    int dcdLast = -1;
+    int dcdStep = 1;
 
     Configure();
     Configure(char *input);

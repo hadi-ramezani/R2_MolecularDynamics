@@ -29,23 +29,32 @@ void ThreeBody::run(const Configure *conf, const Initial* init, const PDB *pdb) 
     // flag to check if we have reached the end of dcd file
     bool flag = true;
     
-    while(flag){
+    //while(flag){
+    for (int ii=0; ii < dcd.nsets; ii++) {
+        if (flag) {
+            // Read a frame
+            if (dcd.setsread == 0){
+                cout << "Reading frame " << conf->dcdFirst << endl;
+                frameNum = conf->dcdFirst;
+            } else if (dcd.setsread <= dcd.nsets) {
+                cout << "Reading frame " << dcd.setsread << endl;            
+                frameNum = dcd.setsread;
+            }
+            flag = dcd.read_frame(conf->numAtoms, pos, aBox, conf);
 
-        // Read a frame
-        flag = dcd.read_frame(conf->numAtoms, pos, aBox);
-        cout << "Reading frame " << frameNum << endl;
+            //Compute and print energies
+            bonded.compute(pos, f, Ebond, Eangle, Edihedral, Eimproper);
+            nonbonded.build_mycells(init, pos, f, conf);
+            nonbonded.build_neighborlist(init, pos, f, conf);
+            nonbonded.mycompute(init, pos, f, Evdw, Eelec, conf);
 
-        //Compute and print energies
-        bonded.compute(pos, f, Ebond, Eangle, Edihedral, Eimproper);
-        nonbonded.build_mycells(init, pos, f, conf);
-        nonbonded.build_neighborlist(init, pos, f, conf);
-        nonbonded.mycompute(init, pos, f, Evdw, Eelec, conf);
-
-        nonbonded.threebody_neighborlist(init, pos, f, conf);
-        nonbonded.compute_threebody(init, pos, f, Emisc, conf);
-        Etot = Ebond + Eangle + Edihedral + Eimproper + Evdw + Eelec + Emisc;
-        out.print(frameNum, Ebond, Eangle, Edihedral, Eimproper, Evdw, Eelec, Emisc, Etot);
-        frameNum++;
+            nonbonded.threebody_neighborlist(init, pos, f, conf);
+            nonbonded.compute_threebody(init, pos, f, Emisc, conf);
+            Etot = Ebond + Eangle + Edihedral + Eimproper + Evdw + Eelec + Emisc;
+            if (flag) {
+                out.print(frameNum, Ebond, Eangle, Edihedral, Eimproper, Evdw, Eelec, Emisc, Etot);
+            }
+        }
     }
 }
 

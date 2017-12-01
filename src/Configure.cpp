@@ -151,7 +151,13 @@ Configure::Configure(char *input) {
             }
         else if (word == "aDcdName"){
             char* pch = strtok(NULL, " ,:=");
-            strcpy(aDcdName,pch);                 
+            strcpy(aDcdName,pch);
+            pch = strtok (NULL, " ,:=");
+            if (pch != NULL) dcdFirst = stoi(pch); 
+            pch = strtok (NULL, " ,:=");
+            if (pch != NULL) dcdLast = stoi(pch); 
+            pch = strtok (NULL, " ,:=");
+            if (pch != NULL) dcdStep = stoi(pch); 
         }
         else if (word == "aMode"){
             char* pch = strtok(NULL, " ,:=");
