@@ -32,6 +32,52 @@ void Trajectory::open_dcd_get_info(const char *filename, int natoms) {
 
     read_header(natoms, nsets, istart, nsavc, delta, nfixed, freeind,
         fixedcoords, reverse, &charmm);
+
+    long header_size, filesize, firstframesize, framesize, trajsize;
+    int ndims = 3; float newnsets;
+    firstframesize = (natoms+4) * ndims * sizeof(float);
+    framesize = (natoms-nfixed+4) * ndims * sizeof(float);
+
+    header_size = dcdf.tellg(); /* save current offset (end of header) */
+    dcdf.seekg(0, dcdf.end);
+    filesize = dcdf.tellg();
+    dcdf.seekg(header_size, dcdf.beg);
+
+    trajsize = filesize - header_size - firstframesize;
+
+    if (trajsize < 0) {
+        cout << "the dcd file appears to contain no timesteps." << endl;
+        dcdf.close();
+        exit(1);
+    }
+
+    newnsets = trajsize / framesize + 1;
+    cout << "Reading " << newnsets << " frames" << endl;
+
+    if (nsets > 0 && newnsets != nsets) {
+        cout << "Warning: DCD header claims " << nsets << 
+                " frames, file size indicates there are actually " 
+                << newnsets << "frames" << endl;
+    }
+
+    nsets = newnsets; 
+    setsread = 0;
+
+    first = 1;
+
+    // Allocate memory for coordinates
+    X = new float[natoms];
+    Y = new float[natoms];
+    Z = new float[natoms];
+    boxdcd = new double[6];
+
+    if (!X || !Y || !Z) {
+        cout << "Unable to allocate space..." << endl;
+     if (X) delete[] X;
+     if (Y) delete[] Y;
+     if (Z) delete[] Z;
+     dcdf.close();
+   }
 }
 
 void Trajectory::read_header(int natoms, int nsets, int istart, int nsavc,
@@ -134,9 +180,32 @@ void Trajectory::read_header(int natoms, int nsets, int istart, int nsavc,
     dcdf.read((char *) input_integer, rec_scale*sizeof(int));
 
      /* Read in the number of atoms */
+    dcdf.read((char *) input_integer, rec_scale*sizeof(int));
+    natoms = *input_integer;
 
-    cout << NTITLE << endl;
-    exit(1);
+    /* Read in an integer '4' */
+    input_integer[1] = 0;
+    dcdf.read((char *) input_integer, rec_scale*sizeof(int));
+
+    freeind = NULL;
+    fixedcoords = NULL;
+    if (namnf != 0) {
+        freeind = (int *) calloc(((natoms)-(namnf)), sizeof(int));
+        if (freeind == NULL) {
+            cout << "Could not allocate memory..." << endl;
+            exit(1);
+        }
+        fixedcoords = (float *) calloc(natoms*4 - namnf, sizeof(float));
+        if (fixedcoords == NULL) {
+            cout << "Could not allocate memory..." << endl;
+            exit(1);
+        }
+        /* Read in index array size */
+        dcdf.read((char *) input_integer, rec_scale*sizeof(int));
+        dcdf.read((char *) freeind, natoms-namnf*sizeof(int));
+        input_integer[1]=0;
+        dcdf.read((char *) input_integer, rec_scale*sizeof(int));
+    }
 
 }
 
