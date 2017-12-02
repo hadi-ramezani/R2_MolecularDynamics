@@ -36,7 +36,7 @@ void ThreeBody::run(const Configure *conf, const Initial* init, const PDB *pdb) 
             if (dcd.setsread == 0){
                 cout << "Reading frame " << conf->dcdFirst << endl;
                 frameNum = conf->dcdFirst;
-            } else if (dcd.setsread <= dcd.nsets) {
+            } else if (dcd.setsread <= dcd.nsets and dcd.setsread != 0) {
                 cout << "Reading frame " << dcd.setsread << endl;            
                 frameNum = dcd.setsread;
             }

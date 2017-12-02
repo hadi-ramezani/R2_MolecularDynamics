@@ -6,7 +6,7 @@
 #include <fcntl.h>
 #include <sstream>
 #include "Trajectory.h"
-
+#include "endianswap.h"
 
 using namespace std;
 
@@ -15,7 +15,6 @@ Trajectory::Trajectory(const char *filename, int natoms, const Configure *conf) 
         write_header(filename, natoms);        
     } else {
         open_dcd_get_info(filename, natoms, conf);
-        //read_header(filename, natoms);
     }
 }
 
@@ -31,7 +30,7 @@ void Trajectory::open_dcd_get_info(const char *filename, int natoms, const Confi
 
 
     read_header(natoms, nsets, istart, nsavc, delta, nfixed, freeind,
-        fixedcoords, reverse, &charmm, conf);
+        fixedcoords, reverse, charmm, conf);
 
     int ndims = 3; float newnsets;
     firstframesize = (natoms+4) * ndims * sizeof(float);
@@ -82,9 +81,32 @@ void Trajectory::open_dcd_get_info(const char *filename, int natoms, const Confi
    }
 }
 
+void Trajectory::print_dcderror(int errcode){
+    const char *errstr;
+    switch (errcode) {
+        case DCD_EOF:         errstr = "end of file"; break;
+        case DCD_DNE:         errstr = "file not found"; break;
+        case DCD_OPENFAILED:  errstr = "file open failed"; break;
+        case DCD_BADREAD:     errstr = "error during read"; break;
+        case DCD_BADEOF:      errstr = "premature end of file"; break;
+        case DCD_BADFORMAT:   errstr = "corruption or unrecognized file structure"; break;
+        case DCD_FILEEXISTS:  errstr = "output file already exists"; break;
+        case DCD_BADMALLOC:   errstr = "memory allocation failed"; break;
+        case DCD_BADWRITE:    errstr = "error during write"; break;
+        case DCD_SUCCESS:     
+        default:
+            errstr = "no error";
+            break;
+    } 
+    cout << errstr << endl; 
+    if (errcode < 0){
+        exit(1);
+    }
+}
+
 void Trajectory::read_header(int natoms, int nsets, int istart, int nsavc,
      double delta, int namnf, int* freeind, float* fixedcoords, int reverse,
-     int* charmm, const Configure *conf) {
+     int charmm, const Configure *conf) {
 
     unsigned int input_integer[2];  /* buffer space */
     int i, ret_val, rec_scale;
@@ -101,9 +123,45 @@ void Trajectory::read_header(int natoms, int nsets, int istart, int nsavc,
 
     // First thing in the file should be an 84.
     dcdf.read((char*)input_integer, 2*sizeof(unsigned int));
-    if (input_integer[0] == 84 && input_integer[1] == dcdcordmagic) {
+    if ((input_integer[0]+input_integer[1]) == 84) {
+        reverse = 0;
+        rec_scale=RECSCALE64BIT;
+        cout << "detected CHARMM -i8 64-bit DCD file of native endianness" << endl;
+    } else if (input_integer[0] == 84 && input_integer[1] == dcdcordmagic) {
         rec_scale=RECSCALE32BIT;
+        reverse = 0;
         cout << "detected standard 32-bit DCD file of native endianness\n" << endl;
+    } 
+    else {
+        /* now try reverse endian */
+        swap4_aligned(input_integer, 2); /* will have to unswap magic if 32-bit */
+        if ((input_integer[0]+input_integer[1]) == 84) {
+            reverse=1;
+            rec_scale=RECSCALE64BIT;
+            cout << "detected CHARMM -i8 64-bit DCD file of opposite endianness" << endl;
+        } 
+        else {
+            swap4_aligned(&input_integer[1], 1); /* unswap magic (see above) */
+            if (input_integer[0] == 84 && input_integer[1] == dcdcordmagic) {
+                reverse=1;
+                rec_scale=RECSCALE32BIT;
+                cout << "detected standard 32-bit DCD file of opposite endianness" << endl;
+            } 
+            else {
+                /* not simply reversed endianism or -i8, something rather more evil */
+                cout << "unrecognized DCD header:" << endl;
+                print_dcderror(DCD_BADFORMAT);
+            }
+        }
+    }
+
+    /* check for magic string, in case of long record markers */
+    if (rec_scale == RECSCALE64BIT) {
+        dcdf.read((char *) input_integer, sizeof(unsigned int));
+        if (input_integer[0] != dcdcordmagic) {
+            cout << "failed to find CORD magic in CHARMM -i8 64-bit DCD file" << endl;
+            print_dcderror(DCD_BADFORMAT);
+        }
     }
 
     /* Buffer the entire header for random access */
@@ -114,46 +172,74 @@ void Trajectory::read_header(int natoms, int nsets, int istart, int nsavc,
     /* Checking if this is nonzero tells us this is a CHARMm file */
     /* and to look for other CHARMm flags.                        */
     if (hdrbuf[76] != 0) {
-        cout << "DCD is charmm";
-        (*charmm) = DCD_IS_CHARMM;
+        charmm = DCD_IS_CHARMM;
+        if (hdrbuf[40] != 0) charmm |= DCD_HAS_EXTRA_BLOCK;
+        if (hdrbuf[44] == 1) charmm |= DCD_HAS_4DIMS;
+        if (rec_scale == RECSCALE64BIT) charmm |= DCD_HAS_64BIT_REC;
+    }
+    else {
+        charmm = DCD_IS_XPLOR; /* must be an X-PLOR format DCD file */
     }
 
-    if (*charmm & DCD_IS_CHARMM) {
+    if (charmm & DCD_IS_CHARMM) {
         /* CHARMM and NAMD versions 2.1b1 and later */
         cout << "CHARMM format DCD file (also NAMD 2.1 and later)" << endl;;
+    }
+    else {
+        cout <<  "X-PLOR format DCD file (also NAMD 2.0 and earlier)" << endl;
     }
 
     /* Store the number of sets of coordinates (nsets) */
     nsets = hdrbuf[0];
+    if (reverse) swap4_unaligned(&nsets, 1);
     /* Store istart, the starting timestep */
     istart = hdrbuf[4];
+    if (reverse) swap4_unaligned(&istart, 1);
     /* Store nsvac, the number of timesteps between dcd saves */
     nsavc = hdrbuf[8];
+    if (reverse) swap4_unaligned(&nsavc, 1);
     /* Store namnf, the number of fixed atoms */
     namnf = hdrbuf[32];
+    if (reverse) swap4_unaligned(&namnf, 1);
 
     /* Read in the timestep, DELTA */
     /* Note: DELTA is stored as a double with X-PLOR but as a float with CHARMm */
-    if ((*charmm) & DCD_IS_CHARMM) {
+    if ((charmm) & DCD_IS_CHARMM) {
         float ftmp;
         ftmp = hdrbuf[36];
+        if (reverse) swap4_aligned(&ftmp, 1);
         delta = (double)ftmp; 
+    }
+    else {
+        delta = hdrbuf[36];
+        if (reverse) swap8_unaligned(&delta, 1);
     }
 
     /* Get the end size of the first block */
     dcdf.read((char *) input_integer, rec_scale*sizeof(int));
+    if (reverse) swap4_aligned(input_integer, rec_scale);
 
+    if (rec_scale == RECSCALE64BIT) {
+        if ((input_integer[0]+input_integer[1]) != 84) {
+            print_dcderror(DCD_BADFORMAT);
+        }
+    }
+    else {
+        if (input_integer[0] != 84) print_dcderror(DCD_BADFORMAT);
+    }
     /* Read in the size of the next block */
     input_integer[1] = 0;
     dcdf.read((char *) input_integer, rec_scale*sizeof(int));
+    if (reverse) swap4_aligned(input_integer, rec_scale);
 
-     if ((((input_integer[0] + input_integer[1])-4) % 80) == 0) {
+    if ((((input_integer[0] + input_integer[1])-4) % 80) == 0) {
         /* Read NTITLE, the number of 80 character title strings there are */
         dcdf.read((char *) &NTITLE, sizeof(int));
+        if (reverse) swap4_aligned(&NTITLE, 1);
 
         if (NTITLE < 0) {
             cout << "WARNING: Bogus NTITLE value..." << endl;
-            exit(1);
+            print_dcderror(DCD_BADFORMAT);
         }
 
         if (NTITLE > 1000) {
@@ -173,40 +259,53 @@ void Trajectory::read_header(int natoms, int nsets, int istart, int nsavc,
         }
         /* Get the ending size for this block */
         dcdf.read((char *) input_integer, rec_scale*sizeof(int));
-    } else {
-            cout << "Bad DCD format..." << endl;
-            exit(1);
+    } 
+    else {
+            print_dcderror(DCD_BADFORMAT);
     }
     /* Read in an integer '4' */
     input_integer[1] = 0;
     dcdf.read((char *) input_integer, rec_scale*sizeof(int));
+    if (reverse) swap4_aligned(input_integer, rec_scale);
+
+    if ((input_integer[0]+input_integer[1]) != 4) print_dcderror(DCD_BADFORMAT);
 
      /* Read in the number of atoms */
     dcdf.read((char *) input_integer, rec_scale*sizeof(int));
     natoms = *input_integer;
+    if (reverse) swap4_aligned(&natoms, 1);
 
     /* Read in an integer '4' */
     input_integer[1] = 0;
     dcdf.read((char *) input_integer, rec_scale*sizeof(int));
+    if (reverse) swap4_aligned(input_integer, rec_scale);
+    if ((input_integer[0]+input_integer[1]) != 4) print_dcderror(DCD_BADFORMAT);
 
     freeind = NULL;
     fixedcoords = NULL;
     if (namnf != 0) {
         freeind = (int *) calloc(((natoms)-(namnf)), sizeof(int));
         if (freeind == NULL) {
-            cout << "Could not allocate memory..." << endl;
-            exit(1);
+            print_dcderror(DCD_BADMALLOC);
         }
         fixedcoords = (float *) calloc(natoms*4 - namnf, sizeof(float));
-        if (fixedcoords == NULL) {
-            cout << "Could not allocate memory..." << endl;
-            exit(1);
-        }
+        if (fixedcoords == NULL) print_dcderror(DCD_BADMALLOC);
+
         /* Read in index array size */
         dcdf.read((char *) input_integer, rec_scale*sizeof(int));
+        if (reverse) swap4_aligned(input_integer, rec_scale);
+
+        if ((input_integer[0]+input_integer[1]) != (natoms-namnf*4)) 
+            print_dcderror(DCD_BADFORMAT);
+
         dcdf.read((char *) freeind, natoms-namnf*sizeof(int));
+        if (reverse) swap4_aligned(&freeind, natoms-namnf);
+
         input_integer[1] = 0;
         dcdf.read((char *) input_integer, rec_scale*sizeof(int));
+        if (reverse) swap4_aligned(input_integer, rec_scale);
+        if ((input_integer[0]+input_integer[1]) != (natoms - namnf*4)) 
+            print_dcderror(DCD_BADFORMAT);
     }
 }
 
@@ -214,18 +313,12 @@ void Trajectory::skip_frames(const int dcdStep){
     dcdf.seekg((dcdStep - 1) * framesize, dcdf.cur);
 }
 
-bool Trajectory::read_frame(int natoms, Vector* pos, double* aBox, const Configure *conf)  {
+void Trajectory::read_dcd_step(int natoms, Vector* pos, double* aBox) {
 
     int out;
     boxdcd = new double[6];
     aBox[0] = aBox[1] = aBox[2] = 1.0;
     aBox[3] = aBox[4] = aBox[5] = 90.0;
-    if (setsread == 0){
-        skip_frames(conf->dcdFirst);
-        setsread+=conf->dcdFirst;
-    }
-    if (setsread  >= nsets) return false;
-
     dcdf.read((char*)&out, sizeof (unsigned int));
 
     // Read box information
@@ -251,6 +344,17 @@ bool Trajectory::read_frame(int natoms, Vector* pos, double* aBox, const Configu
         pos[ii].y = Y[ii]; //- floor(coor[ii].y/box[1])*box[1];
         pos[ii].z = Z[ii]; //- floor(coor[ii].z/box[2])*box[2];
     }
+}
+
+bool Trajectory::read_frame(int natoms, Vector* pos, double* aBox, const Configure *conf)  {
+
+    if (setsread == 0){
+        if (conf->dcdFirst != 0) skip_frames(conf->dcdFirst);
+        setsread += conf->dcdFirst;
+    }
+    if (setsread  >= nsets) return false;
+
+    read_dcd_step(natoms, pos, aBox);
 
     skip_frames(conf->dcdStep);
     setsread += conf->dcdStep;
