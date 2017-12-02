@@ -32,9 +32,14 @@ void Trajectory::open_dcd_get_info(const char *filename, int natoms, const Confi
     read_header(natoms, nsets, istart, nsavc, delta, nfixed, freeind,
         fixedcoords, reverse, charmm, conf);
 
-    int ndims = 3; float newnsets;
+    int ndims, extrablocksize;
+    int newnsets;
+    extrablocksize = charmm & DCD_HAS_EXTRA_BLOCK ? 48 + 8 : 0;
+    ndims = charmm & DCD_HAS_4DIMS ? 4 : 3;
     firstframesize = (natoms+4) * ndims * sizeof(float);
-    framesize = (natoms-nfixed) * ndims * sizeof(float) + 8 * sizeof(int) + 6 * sizeof(double);
+    //framesize = (natoms-nfixed) * ndims * sizeof(float) + 8 * sizeof(int) + 6 * sizeof(double);
+    framesize = (natoms-nfixed + 2) * ndims * sizeof(float) + extrablocksize;
+
 
     header_size = dcdf.tellg(); /* save current offset (end of header) */
     dcdf.seekg(0, dcdf.end);
@@ -458,57 +463,6 @@ void Trajectory::write_frame(int natoms, const Vector *coor, const double *box) 
     dcdf.write ((char*)&out, sizeof (int));
 
 }
-
-/*void Trajectory::read_header(const char *filename, int natoms) {
-
-    int out;
-    char buff[80];
-    char title[200];
-
-
-    // read the dcd header
-    dcdf.read((char*) &out, sizeof (int));
-
-    strcpy(buff, "CORD");
-    dcdf.read(buff, 4);
-
-    dcdf.read((char*)&out, sizeof (int));
-    dcdf.read((char*)&out, sizeof (int));
-    dcdf.read((char*)&out, sizeof (int));
-
-    for (int ii=0; ii<6; ii++){
-        dcdf.read((char*)&out, sizeof (int));
-    }
-
-    float outf = 2.0;
-    dcdf.read((char*)&outf, sizeof (double));
-
-    for (int ii=0; ii<8; ii++){
-        dcdf.read((char*)&out, sizeof (int));
-    }
-
-    dcdf.read((char*)&out, sizeof (int));
-    dcdf.read((char*)&out, sizeof (int));
-    dcdf.read((char*)&out, sizeof (int));
-
-    dcdf.read((char*)&out, sizeof (int));
-    sprintf(title,"REMARKS FILENAME= out.dcd CREATED BY NAMD");
-    title[79]='\0';
-    dcdf.read(title, 80);
-    sprintf(title,"TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT");
-    dcdf.read(buff, 80);
-
-    dcdf.read((char*)&out, sizeof (int));
-
-    dcdf.read((char*)&out, sizeof (int));
-    dcdf.read((char*)&natoms, sizeof (int));
-    dcdf.read((char*)&out, sizeof (int));
-
-    X = new float[natoms];
-    Y = new float[natoms];
-    Z = new float[natoms];
-    boxdcd = new double[6];
-}*/
 
 Trajectory::Trajectory(const Trajectory& orig) {
 }
