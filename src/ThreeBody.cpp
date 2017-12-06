@@ -52,7 +52,7 @@ void ThreeBody::run(const Configure *conf, const Initial* init, const PDB *pdb) 
             nonbonded.compute_threebody(init, pos, f, Emisc, conf);
             Etot = Ebond + Eangle + Edihedral + Eimproper + Evdw + Eelec + Emisc;
             if (flag) {
-                out.print(frameNum, Ebond, Eangle, Edihedral, Eimproper, Evdw, Eelec, Emisc, Etot);
+                out.print(frameNum, Ebond, Eangle, Edihedral, Eimproper, Evdw, Eelec, Emisc, Etot, aBox[0], aBox[1], aBox[2]);
             }
         }
     }

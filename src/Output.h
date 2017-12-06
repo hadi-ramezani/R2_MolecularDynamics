@@ -19,7 +19,8 @@ public:
         const double Etot, const double temp);
     void print(const unsigned int frameNum, const double Ebond, 
         const double Eangle, const double Edihedral, const double Eimproper,
-        const double Evdw, const double Eelec, const double Emisc, const double Etot);
+        const double Evdw, const double Eelec, const double Emisc, const double Etot,
+        const double a, const double b, const double c);
     void print_threebody(const double rik, const double xik, const double yik, const double zik, const double thetakij,
         const double thetazij, const double energy);
     Output();

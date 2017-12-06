@@ -18,7 +18,10 @@ Output::Output(const char *filename, const Configure* conf) {
             << setw(width) << right << "Evdw"
             << setw(width) << right << "Eelec"
             << setw(width) << right << "Emisc"
-            << setw(width) << right << "Etotal" << endl;
+            << setw(width) << right << "Etotal"
+            << setw(width) << right << "a(A)" 
+            << setw(width) << right << "b(A)"
+            << setw(width) << right << "c(A)" << endl;
     } 
     else {
         outf << setw(width) << right << "#Step" 
@@ -68,7 +71,7 @@ void Output::print(const int Step, const double Time, const double Ebond, const 
 
 // Analysis output
 void Output::print(const unsigned int frameNum, const double Ebond, const double Eangle, const double Edihedral, const double Eimproper,
-    const double Evdw, const double Eelec, const double Emisc, const double Etot) {
+    const double Evdw, const double Eelec, const double Emisc, const double Etot, const double a, const double b, const double c) {
     
     outf << setw(width) << right << frameNum
         << setw(width) << right << Ebond 
@@ -78,7 +81,10 @@ void Output::print(const unsigned int frameNum, const double Ebond, const double
         << setw(width) << right << Evdw 
         << setw(width) << right << Eelec
         << setw(width) << right << Emisc
-        << setw(width) << right << Etot << endl;    
+        << setw(width) << right << Etot 
+        << setw(width) << right << a 
+        << setw(width) << right << b
+        << setw(width) << right << c << endl;    
 }
 
 void Output::print_threebody(const double rik, const double xik, const double yik, const double zik, const double thetakij,
