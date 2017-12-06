@@ -64,9 +64,17 @@ public:
     void threebody_neighborlist(const Initial *init, const Vector *pos, Vector *f, const Configure *conf);
     void mycompute(const Initial *init, const Vector *pos, 
                    Vector *f, double& Evdw, double &Eelec, const Configure *conf);
-
     void compute_threebody(const Initial *init, const Vector *pos, 
                    Vector *f, double& Emisc, const Configure *conf);
+
+    // Analysis functions
+    void analysis_cells(const Initial *init, const Vector *pos, Vector *f, const Configure *conf, const double* aBox);
+    void analysis_nbrlist(const Initial *init, const Vector *pos, Vector *f, const double* aBox);
+    void analysis_threebody_nbrlist(const Initial *init, const Vector *pos, Vector *f, const double* aBox);
+    void analysis_comp(const Initial *init, const Vector *pos, 
+                   Vector *f, double& Evdw, double &Eelec, const double* aBox);
+    void analysis_comp_threebody(const Initial *init, const Vector *pos, 
+                   Vector *f, double& Emisc, const double* aBox);
 
     void apply_pbc(const double box[3], const double box_2[3], Vector &dij);
 

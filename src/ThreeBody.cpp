@@ -36,7 +36,7 @@ void ThreeBody::run(const Configure *conf, const Initial* init, const PDB *pdb) 
             if (dcd.setsread == 0){
                 cout << "Reading frame " << conf->dcdFirst << endl;
                 frameNum = conf->dcdFirst;
-            } else if (dcd.setsread <= dcd.nsets and dcd.setsread != 0) {
+            } else if (dcd.setsread <= dcd.nsets && dcd.setsread != 0) {
                 cout << "Reading frame " << dcd.setsread << endl;            
                 frameNum = dcd.setsread;
             }
@@ -44,12 +44,13 @@ void ThreeBody::run(const Configure *conf, const Initial* init, const PDB *pdb) 
 
             //Compute and print energies
             bonded.compute(pos, f, Ebond, Eangle, Edihedral, Eimproper);
-            nonbonded.build_mycells(init, pos, f, conf);
-            nonbonded.build_neighborlist(init, pos, f, conf);
-            nonbonded.mycompute(init, pos, f, Evdw, Eelec, conf);
 
-            nonbonded.threebody_neighborlist(init, pos, f, conf);
-            nonbonded.compute_threebody(init, pos, f, Emisc, conf);
+            nonbonded.analysis_cells(init, pos, f, conf, aBox);
+            nonbonded.analysis_nbrlist(init, pos, f, aBox);
+            nonbonded.analysis_comp(init, pos, f, Evdw, Eelec, aBox);
+
+            nonbonded.analysis_threebody_nbrlist(init, pos, f, aBox);
+            nonbonded.analysis_comp_threebody(init, pos, f, Emisc, aBox);
             Etot = Ebond + Eangle + Edihedral + Eimproper + Evdw + Eelec + Emisc;
             if (flag) {
                 out.print(frameNum, Ebond, Eangle, Edihedral, Eimproper, Evdw, Eelec, Emisc, Etot, aBox[0], aBox[1], aBox[2]);
