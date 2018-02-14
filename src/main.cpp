@@ -57,7 +57,6 @@ int main(int argc, char** argv) {
 
     Initial init(&conf, &params); // Prepare initial parameteres for run
 
-    Integrator run(&conf,&init, &pdb, &params); // Main class for MD code
 
     if (strncasecmp(conf.analysis, "on", 2) == 0){
         if (strncasecmp(conf.aMode, "3body", 4) == 0) {
@@ -66,6 +65,7 @@ int main(int argc, char** argv) {
         }
     }
     else {
+        Integrator run(&conf,&init, &pdb, &params); // Main class for MD code
         run.loop(&conf, &init);
     }
 

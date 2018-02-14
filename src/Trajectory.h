@@ -28,6 +28,7 @@ using namespace std;
 
 #define RECSCALE32BIT 1
 #define RECSCALE64BIT   2 
+#define RECSCALEMAX 2
 
 /* defines used by write_dcdstep */
 #define NFILE_POS 8L
@@ -69,7 +70,7 @@ public:
     void open_dcd_get_info(const char *filename, int natoms, const Configure *conf);
     void write_frame(int natoms, const Vector *coor, const double* box);
     bool read_frame(int natoms, Vector *coor, double* box, const Configure *conf);
-    void skip_frames(const int dcdStep);
+    void skip_frames(const int dcdStep, int setsread);
     void read_dcd_step(int natoms, Vector* coor, double* box);
     void print_dcderror(int errcode);
     Trajectory(const char *filename, int natoms, const Configure* conf);

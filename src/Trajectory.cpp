@@ -24,7 +24,7 @@ void Trajectory::open_dcd_get_info(const char *filename, int natoms, const Confi
     dcdf.open(filename, ios::in|ios::binary);
 
     if (!dcdf) {
-        cout << "Error: could not read the input dcd file " << endl;
+        cout << "Error: could not read the input dcd file: " << filename << endl;
         exit(1);
     }
 
@@ -37,9 +37,9 @@ void Trajectory::open_dcd_get_info(const char *filename, int natoms, const Confi
     extrablocksize = charmm & DCD_HAS_EXTRA_BLOCK ? 48 + 8 : 0;
     ndims = charmm & DCD_HAS_4DIMS ? 4 : 3;
     firstframesize = (natoms+4) * ndims * sizeof(float);
-    //framesize = (natoms-nfixed) * ndims * sizeof(float) + 8 * sizeof(int) + 6 * sizeof(double);
-    framesize = (natoms-nfixed + 2) * ndims * sizeof(float) + extrablocksize;
-
+    framesize = (natoms-nfixed) * ndims * sizeof(float) + 8 * sizeof(int) + 6 * sizeof(double);
+    //framesize = (natoms-nfixed) * ndims * sizeof(float) + extrablocksize;
+    //framesize = 61232;
 
     header_size = dcdf.tellg(); /* save current offset (end of header) */
     dcdf.seekg(0, dcdf.end);
@@ -314,8 +314,11 @@ void Trajectory::read_header(int natoms, int nsets, int istart, int nsavc,
     }
 }
 
-void Trajectory::skip_frames(const int dcdStep){
-    dcdf.seekg((dcdStep - 1) * framesize, dcdf.cur);
+void Trajectory::skip_frames(const int dcdStep, int setsread){
+    //if (setsread == 0){
+    //    dcdf.seekg(firstframesize*(dcdStep-1), dcdf.cur);        
+    //}
+    dcdf.seekg(framesize*(dcdStep-1), dcdf.cur);
 }
 
 void Trajectory::read_dcd_step(int natoms, Vector* pos, double* aBox) {
@@ -353,15 +356,18 @@ void Trajectory::read_dcd_step(int natoms, Vector* pos, double* aBox) {
 
 bool Trajectory::read_frame(int natoms, Vector* pos, double* aBox, const Configure *conf)  {
 
+    // skipe frames if we are not starting from the first one
     if (setsread == 0){
-        if (conf->dcdFirst != 0) skip_frames(conf->dcdFirst);
+        if (conf->dcdFirst != 0) {
+            //skip_frames(2, setsread);
+            skip_frames(conf->dcdFirst, setsread);
+        }
         setsread += conf->dcdFirst;
     }
+    // return false if we have reads all sets of coordinates
     if (setsread  >= nsets) return false;
-
     read_dcd_step(natoms, pos, aBox);
-
-    skip_frames(conf->dcdStep);
+    skip_frames(conf->dcdStep, setsread);
     setsread += conf->dcdStep;
 
     if (!dcdf) {
