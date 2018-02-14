@@ -1,5 +1,6 @@
 CC = icpc
 CFLAGS  = -std=c++11 -Wall -O3 -g #-ipo #-xavx #-g  
+#CFLAGS  = -std=c++11 -Wall -O -g #-ipo #-xavx #-g  
 #LDFLAGS = -opt-report=4 -opt-report-phase=loop,vec -opt-report-file=stderr
 HEAD = $(wildcard ./src/*.h)
 SOURCES = $(wildcard ./src/*.cpp) 
